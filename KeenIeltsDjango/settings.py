@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # Apps
     'base',
+    'api',
 
     # 3rd Party Apps:
     'django_use_email_as_username.apps.DjangoUseEmailAsUsernameConfig',
