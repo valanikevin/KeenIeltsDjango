@@ -9,6 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from custom_user.serializers import NoteSerializer
 from custom_user.models import Notes
+import json
+from custom_user.forms import UserCreationForm
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -42,3 +44,14 @@ def getNotes(request):
     notes = Notes.objects.filter(user=request.user)
     serializer = NoteSerializer(notes, many=True)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+def register_user(request):
+    data = json.loads(request.body)
+    form = UserCreationForm(data)
+    if form.is_valid():
+        print('Form is Valid')
+    else:
+        print(form.errors)
+    return Response(status=200)
