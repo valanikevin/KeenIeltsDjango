@@ -1,3 +1,20 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
 # Create your models here.
+
+
+class CoachingInstitute(models.Model):
+    is_verified = models.BooleanField(
+        default=False, help_text='Is this school verified for green tick?')
+    name = models.CharField(
+        max_length=200, help_text='Name of this institute.')
+    email = models.EmailField(
+        help_text="Primary email of this institute.", max_length=254)
+    phone = models.CharField(
+        help_text="Primary phone number of this institute.", max_length=50)
+    logo = models.ImageField(
+        help_text="Logo of this institute")
+
+    def __str__(self):
+        return self.name
