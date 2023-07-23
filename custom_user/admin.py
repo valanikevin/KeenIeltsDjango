@@ -5,6 +5,12 @@ from django.utils.translation import gettext_lazy as _
 from .models import User
 from student.models import Student
 
+from coachinginstitute.models import Tutor
+
+
+class TutorInline(admin.StackedInline):
+    model = Tutor
+
 
 class StudentInline(admin.StackedInline):
     model = Student
@@ -37,7 +43,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("email", "first_name", "last_name", "is_staff")
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
-    inlines = [StudentInline]
+    inlines = [StudentInline, TutorInline]
 
 
 admin.site.register(User, UserAdmin)
