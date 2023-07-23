@@ -3,6 +3,11 @@ from django_use_email_as_username.admin import BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from .models import User
+from student.models import Student
+
+
+class StudentInline(admin.StackedInline):
+    model = Student
 
 
 class UserAdmin(BaseUserAdmin):
@@ -32,6 +37,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("email", "first_name", "last_name", "is_staff")
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
+    inlines = [StudentInline]
 
 
 admin.site.register(User, UserAdmin)

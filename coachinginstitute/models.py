@@ -18,3 +18,14 @@ class CoachingInstitute(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Tutor(models.Model):
+    user = models.OneToOneField(get_user_model(
+    ), on_delete=models.CASCADE, help_text='Select base user')
+    institute = models.OneToOneField(
+        CoachingInstitute, help_text='Is this Tutor part of any Coaching Institute?', on_delete=models.CASCADE)
+    
+
+    def __str__(self):
+        return self.user.email
