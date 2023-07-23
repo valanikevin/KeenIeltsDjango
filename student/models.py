@@ -8,4 +8,6 @@ class Student(models.Model):
     ), on_delete=models.CASCADE, help_text='Select base user for this student.')
     institute = models.OneToOneField(CoachingInstitute, on_delete=models.SET_NULL, null=True,
                                      blank=True, help_text="Is this student enrolled at any coaching institute?")
-    
+
+    def __str__(self):
+        return self.user.email
