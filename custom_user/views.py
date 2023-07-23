@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
+from student.models import Student
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 import json
@@ -34,6 +34,9 @@ def register_user(request):
     form = UserCreationForm(data)
     if form.is_valid():
         user = form.save()
+
+        Student.objects.create(user=user)
+
         data = {
             'type': 'success',
             'email': user.email,
@@ -41,7 +44,6 @@ def register_user(request):
         }
         status = 200
     else:
-        _error = []
         errors = eval(form.errors.as_json())
 
         data = {
