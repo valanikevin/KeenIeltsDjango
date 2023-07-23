@@ -12,6 +12,7 @@ import time
 from custom_user.forms import UserCreationForm
 
 
+# Login Views
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -19,7 +20,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         token['email'] = user.email
-        # ...
+        #  token['coachinginstitute']=
 
         return token
 

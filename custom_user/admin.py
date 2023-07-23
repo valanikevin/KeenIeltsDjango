@@ -10,10 +10,12 @@ from coachinginstitute.models import Tutor
 
 class TutorInline(admin.StackedInline):
     model = Tutor
+    autocomplete_fields = ['user', 'institute']
 
 
 class StudentInline(admin.StackedInline):
     model = Student
+    autocomplete_fields = ['user', 'institute']
 
 
 class UserAdmin(BaseUserAdmin):

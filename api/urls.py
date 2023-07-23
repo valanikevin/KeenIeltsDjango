@@ -13,7 +13,7 @@ urlpatterns = [
     path('leaderboard/', include('leaderboard.urls')),
     path('student/', include('student.urls')),
 
-    # Authentication
+    # Authentication / Login Views
     path('register/', user_views.register_user),
     path('token/', user_views.MyTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
