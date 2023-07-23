@@ -6,6 +6,7 @@ from custom_user.admin import StudentInline
 
 class TutorInline(admin.StackedInline):
     model = Tutor
+    autocomplete_fields = ['user']
 
 
 class CoachingInstituteAdmin(admin.ModelAdmin):
