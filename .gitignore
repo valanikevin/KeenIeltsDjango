@@ -1,7 +1,7 @@
 venv/
 __pycache__/
 *.py[cod]
-
+media/
 # C extensions
 *.so
 

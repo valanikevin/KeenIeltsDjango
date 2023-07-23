@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from datetime import timedelta
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -135,7 +135,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = os.path.join(BASE_DIR, 'static files')
+
+STATIC_URL = '/static/'  # path to read css with local (probably)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+MEDIA_DIR = f'{BASE_DIR}/media'
+MEDIA_ROOT = MEDIA_DIR
+MEDIA_URL = '/media/'
+
 AUTH_USER_MODEL = 'custom_user.User'
 
 
