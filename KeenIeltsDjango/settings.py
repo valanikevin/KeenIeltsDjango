@@ -31,6 +31,11 @@ INSTALLED_APPS = [
     # Apps
     'base',
     'api',
+    'amrita',
+    'coachinginstitute',
+    'ieltstest',
+    'leaderboard',
+    'student',
 
     # 3rd Party Apps:
     'django_use_email_as_username.apps.DjangoUseEmailAsUsernameConfig',
