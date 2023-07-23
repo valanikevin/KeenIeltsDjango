@@ -1,10 +1,10 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-
+from KeenIeltsDjango.models import SlugifiedBaseModal
 # Create your models here.
 
 
-class CoachingInstitute(models.Model):
+class CoachingInstitute(SlugifiedBaseModal):
     is_verified = models.BooleanField(
         default=False, help_text='Is this school verified for green tick?')
     name = models.CharField(
