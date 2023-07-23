@@ -1,3 +1,11 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+from coachinginstitute.models import CoachingInstitute
 
-# Create your models here.
+
+class Student(models.Model):
+    user = models.OneToOneField(get_user_model(
+    ), on_delete=models.CASCADE, help_text='Select base user for this student.')
+    institute = models.OneToOneField(CoachingInstitute, on_delete=models.SET_NULL, null=True,
+                                     blank=True, help_text="Is this student enrolled at any coaching institute?")
+    
