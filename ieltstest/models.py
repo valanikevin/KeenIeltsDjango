@@ -3,11 +3,12 @@ from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel
 from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
+from django.core.exceptions import ValidationError
 
 STATUS = (
     ('draft', 'Draft'),
     ('in-progress', 'In Progress'),
-    ('error-check', 'Error Check'),
+    ('error-check', 'Perform Error Check'),
     ('error-found', 'Error Found'),
     ('published', 'Published'),
     ('discard', 'Discard')
@@ -95,3 +96,23 @@ class ListeningSection(IndividualSectionAbstract):
 
     def __str__(self):
         return f'{self.parent_test.name} - {self.section}'
+
+
+def check_answers_json(answers):
+    for item in answers:
+        # {'question': 0, 'answer': [None]}
+
+        if not item.question:
+            raise ValidationError(
+                f"Some of questions are not correctly marked: {item}")
+        else:
+            if not item.get('answer'):
+                raise ValidationError(
+                    f"Some of answers contains null values: {item}"
+                )
+            else:
+                for answer in item.get('answer'):
+                    if not answer:
+                        raise ValidationError(
+                            f"Some of answers contains null values: {item}"
+                        )
