@@ -1,7 +1,7 @@
 from django.db import models
 from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel
 from coachinginstitute.models import CoachingInstitute
-from ckeditor.fields import RichTextField
+from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 
 STATUS = (
@@ -85,10 +85,11 @@ class ListeningTest(IndividualTestAbstract):
 
 
 class ListeningSection(IndividualSectionAbstract):
+    # 4 section: each section has 10 questions.
     parent_test = models.ForeignKey(
         ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
-    questions = RichTextField(help_text='Add Question in HTML Format')
+    questions = RichTextUploadingField(help_text='Add Question in HTML Format')
     answers = models.JSONField(
         help_text='Add 40 answers in JSON format only.', default=get_listening_answer_default)
 
