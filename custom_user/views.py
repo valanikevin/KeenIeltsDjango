@@ -20,7 +20,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         token['email'] = user.email
-        #  token['coachinginstitute']=
+        token['coachinginstitute_slug'] = user.student.institute.slug if user.student.institute else None
+        
 
         return token
 
