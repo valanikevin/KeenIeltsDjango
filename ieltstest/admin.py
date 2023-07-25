@@ -20,7 +20,7 @@ class TestAdmin(admin.ModelAdmin):
 class ListeningTestAdmin(admin.ModelAdmin):
     search_fields = ['name']
     inlines = [ListeningSectionInline]
-
+    
 
 admin.site.register(ListeningTest, ListeningTestAdmin)
 admin.site.register(Test, TestAdmin)

@@ -4,6 +4,46 @@ from coachinginstitute.models import CoachingInstitute
 from ckeditor.fields import RichTextField
 from ieltstest.answer_json.listening import get_listening_answer_default
 
+STATUS = (
+    ('draft', 'Draft'),
+    ('in-progress', 'In Progress'),
+    ('error-check', 'Error Check'),
+    ('error-found', 'Error Found'),
+    ('published', 'Published'),
+    ('discard', 'Discard')
+)
+
+# Abstract Models
+
+
+class IndividualTestAbstract(SlugifiedBaseModal):
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?')
+    test = models.OneToOneField(
+        'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+
+    class Meta:
+        abstract = True
+
+
+class IndividualSectionAbstract(SlugifiedBaseModal):
+    SECTION = (
+        ('section1', 'Section 1'),
+        ('section2', 'Section 2'),
+        ('section3', 'Section 3'),
+        ('section4', 'Section 4'),
+    )
+
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
+
+    class Meta:
+        abstract = True
+
+# Ends: Abstract Models
+
 
 class Category(SlugifiedBaseModal):
     name = models.CharField(
@@ -38,28 +78,15 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return self.name
 
 
-class ListeningTest(SlugifiedBaseModal):
-    test = models.OneToOneField(
-        Test, help_text='Select Parent Test', on_delete=models.CASCADE)
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+class ListeningTest(IndividualTestAbstract):
 
     def __str__(self):
         return self.name
 
 
-class ListeningSection(SlugifiedBaseModal):
-    SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
-    )
-
+class ListeningSection(IndividualSectionAbstract):
     parent_test = models.ForeignKey(
         ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
-    section = models.CharField(
-        choices=SECTION, help_text='What is section type?')
     audio = models.FileField(help_text='Add Audio file for this section')
     questions = RichTextField(help_text='Add Question in HTML Format')
     answers = models.JSONField(
