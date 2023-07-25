@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'randomslugfield',
     'ckeditor',
+    'nested_inline',
 
 ]
 
