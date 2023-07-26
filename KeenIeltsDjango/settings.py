@@ -207,8 +207,10 @@ CKEDITOR_CONFIGS = {
              'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', ]},
             {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
             {'name': 'insert',
-             'items': ['Image', 'Youtube', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'addTestButton', 'SpecialChar', 'PageBreak', 'Iframe']},
-            '/',
+             'items': ['Image', 'Youtube', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe']},
+            {'name': 'forms',
+             'items': ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton',
+                       'HiddenField']},
             {'name': 'styles', 'items': [
                 'Styles', 'Format', 'FontSize']},
             {'name': 'colors', 'items': ['TextColor', 'BGColor']},
@@ -224,7 +226,6 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'Custom',  # put selected toolbar config here
         'height': 400,
         # 'width': '100%',
-        'extraPlugins': ','.join(['addTestButton']),
 
     }
 }
