@@ -54,11 +54,9 @@ class ListeningTest(models.Model):
         choices=STATUS, help_text='What is current status of this test?')
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
 
     def __str__(self):
-        return self.name
+        return self.test.name
 
     @property
     def sections(self):
@@ -73,7 +71,8 @@ class ListeningSection(models.Model):
         ('section3', 'Section 3'),
         ('section4', 'Section 4'),
     )
-
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
     section = models.CharField(
         choices=SECTION, help_text='What is section type?')
     parent_test = models.ForeignKey(
@@ -81,7 +80,7 @@ class ListeningSection(models.Model):
     audio = models.FileField(help_text='Add Audio file for this section')
 
     def __str__(self):
-        return f'{self.parent_test.name} - {self.section}'
+        return f'{self.name} - {self.section}'
 
 
 class ListeningQuestionSet(models.Model):
@@ -96,4 +95,4 @@ class ListeningQuestionSet(models.Model):
         help_text='Add answers for the questions above', default=get_listening_answer_default)
 
     def __str__(self):
-        return '{self.section.section} - {self.name}'
+        return f'{self.section.section} - {self.name}'
