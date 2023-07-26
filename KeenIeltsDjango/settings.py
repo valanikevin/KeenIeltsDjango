@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'randomslugfield',
+    'ckeditor',
+    'nested_inline',
 
 ]
 
@@ -148,13 +150,16 @@ MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'custom_user.User'
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+CKEDITOR_UPLOAD_PATH = 'uploads/'
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=15),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": False,
+    "UPDATE_LAST_LOGIN": True,
 
     "ALGORITHM": "HS256",
     "VERIFYING_KEY": "",
@@ -189,3 +194,46 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+CKEDITOR_CONFIGS = {
+    'default': {
+
+        'toolbar_Custom': [
+
+            '/',
+            {'name': 'basicstyles',
+             'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat']},
+            {'name': 'paragraph',
+             'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', ]},
+            {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
+            {'name': 'insert',
+             'items': ['Image', 'Youtube', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe']},
+            {'name': 'forms',
+             'items': ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton',
+                       'HiddenField']},
+            {'name': 'styles', 'items': [
+                'Styles', 'Format', 'FontSize']},
+            {'name': 'colors', 'items': ['TextColor', 'BGColor']},
+            {'name': 'tools', 'items': ['Maximize', 'ShowBlocks']},
+            {'name': 'about', 'items': ['CodeSnippet']},
+            {'name': 'yourcustomtools', 'items': [
+                # put the name of your editor.ui.addButton here
+                'Preview',
+                'Maximize',
+
+            ]},
+        ],
+        'toolbar': 'Custom',  # put selected toolbar config here
+        'height': 400,
+        # 'width': '100%',
+
+    }
+}
+
+CKEDITOR_CONFIGS1 = {
+    'default': {
+        'extraPlugins': 'addTestButton',
+        # Path to a custom CKEditor config file
+        'customConfig': '/static/ckeditor_plugins/addTestButton/ckeditor_config.js'
+    },
+}
