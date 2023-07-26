@@ -27,20 +27,18 @@ class Category(SlugifiedBaseModal):
         return self.name
 
 
-class Test(SlugifiedBaseModal, TimestampedBaseModel):
+class Book(SlugifiedBaseModal, TimestampedBaseModel):
     DIFFICULTY = (
         ('beginner', 'Beginner'),
         ('intermediate', 'Intermediate'),
         ('advanced', 'Advanced'),
     )
-    is_approved = models.BooleanField(
-        default=False, help_text='Is this test approved for public?')
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, help_text='Select Category for this Test.')
     name = models.CharField(
-        max_length=200, help_text='What is name of the Test? e.g. Cambridge Complete Test 11')
+        max_length=200, help_text='What is name of the book?')
     difficulty = models.CharField(
         choices=DIFFICULTY, max_length=200, help_text='Difficulty level of this test')
+    cover = models.ImageField(
+        help_text='Image of the Book Cover', null=True, blank=True)
     institute = models.ForeignKey(
         CoachingInstitute, on_delete=models.SET_NULL, blank=False, null=True, help_text='Which institute has created this test?')
 
@@ -48,10 +46,19 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return self.name
 
 
-class ListeningTest(models.Model):
-    active = models.BooleanField(default=False, help_text='Is this test active?')
+class Test(SlugifiedBaseModal, TimestampedBaseModel):
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?')
+    name = models.CharField(
+        max_length=200, help_text='Test 1')
+
+    def __str__(self):
+        return self.name
+
+
+class ListeningTest(models.Model):
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, help_text='Select Category for this Individual Test.')
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -71,28 +78,17 @@ class ListeningSection(models.Model):
         ('section3', 'Section 3'),
         ('section4', 'Section 4'),
     )
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
     section = models.CharField(
         choices=SECTION, help_text='What is section type?')
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
     parent_test = models.ForeignKey(
         ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
-
-    def __str__(self):
-        return f'{self.name} - {self.section}'
-
-
-class ListeningQuestionSet(models.Model):
-    # E.g. Complete the sentences below (Questions 14-21)
-    name = models.CharField(max_length=200, help_text='e.g. Questions 31-40')
-    section = models.ForeignKey(ListeningSection, on_delete=models.CASCADE,
-                                help_text='Select Section for this Question Set')
-
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
 
     def __str__(self):
-        return f'{self.section.section} - {self.name}'
+        return f'{self.name} - {self.section}'
