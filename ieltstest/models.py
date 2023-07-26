@@ -14,37 +14,6 @@ STATUS = (
     ('discard', 'Discard')
 )
 
-# Abstract Models
-
-
-class IndividualTestAbstract(SlugifiedBaseModal):
-    status = models.CharField(
-        choices=STATUS, help_text='What is current status of this test?')
-    test = models.OneToOneField(
-        'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
-
-    class Meta:
-        abstract = True
-
-
-class IndividualSectionAbstract(SlugifiedBaseModal):
-    SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
-    )
-
-    section = models.CharField(
-        choices=SECTION, help_text='What is section type?')
-
-    class Meta:
-        abstract = True
-
-# Ends: Abstract Models
-
 
 class Category(SlugifiedBaseModal):
     name = models.CharField(
@@ -79,7 +48,14 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return self.name
 
 
-class ListeningTest(IndividualTestAbstract):
+class ListeningTest(models.Model):
+
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?')
+    test = models.OneToOneField(
+        'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
 
     def __str__(self):
         return self.name
@@ -89,8 +65,17 @@ class ListeningTest(IndividualTestAbstract):
         return ListeningSection.objects.filter(parent_test=self)
 
 
-class ListeningSection(IndividualSectionAbstract):
+class ListeningSection(models.Model):
     # 4 section: each section has 10 questions.
+    SECTION = (
+        ('section1', 'Section 1'),
+        ('section2', 'Section 2'),
+        ('section3', 'Section 3'),
+        ('section4', 'Section 4'),
+    )
+
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
     parent_test = models.ForeignKey(
         ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
@@ -104,6 +89,7 @@ class ListeningQuestionSet(models.Model):
     name = models.CharField(max_length=200, help_text='e.g. Questions 31-40')
     section = models.ForeignKey(ListeningSection, on_delete=models.CASCADE,
                                 help_text='Select Section for this Question Set')
+
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
