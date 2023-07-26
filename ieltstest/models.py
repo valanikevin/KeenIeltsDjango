@@ -49,11 +49,11 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningTest(models.Model):
-
+    active = models.BooleanField(default=False, help_text='Is this test active?')
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?')
     test = models.OneToOneField(
-        'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
+        'Test', help_text='Select Parent Test', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.test.name
