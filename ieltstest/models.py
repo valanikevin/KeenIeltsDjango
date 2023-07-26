@@ -84,11 +84,6 @@ class ListeningTest(IndividualTestAbstract):
     def __str__(self):
         return self.name
 
-    def clean(self):
-        if self.status == "error-check":
-            for section in self.sections.all():
-                check_answers_json(section)
-
     @property
     def sections(self):
         return ListeningSection.objects.filter(parent_test=self)
@@ -99,30 +94,20 @@ class ListeningSection(IndividualSectionAbstract):
     parent_test = models.ForeignKey(
         ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
-    questions = RichTextUploadingField(help_text='Add Question in HTML Format')
-    answers = models.JSONField(
-        help_text='Add 40 answers in JSON format only.', default=get_listening_answer_default)
 
     def __str__(self):
         return f'{self.parent_test.name} - {self.section}'
 
-# Needs to implement post_save()
-def check_answers_json(instance):
-    answers = instance.answers
-    for item in answers:
-        # {'question': 0, 'answer': [None]}
-        print(item)
-        if not item.get('question'):
-            raise ValidationError(
-                f"Some of questions are not correctly marked: {item}")
-        else:
-            if not item.get('answer'):
-                raise ValidationError(
-                    f"Some of answers contains null values: {item}"
-                )
-            else:
-                for answer in item.get('answer'):
-                    if not answer:
-                        raise ValidationError(
-                            f"Some of answers contains null values: {item}"
-                        )
+
+class ListeningQuestionSet(models.Model):
+    # E.g. Complete the sentences below (Questions 14-21)
+    name = models.CharField(max_length=200, help_text='e.g. Questions 31-40')
+    section = models.ForeignKey(ListeningSection, on_delete=models.CASCADE,
+                                help_text='Select Section for this Question Set')
+    questions = RichTextUploadingField(
+        help_text='Add questions with form elements and correct ids')
+    answers = models.JSONField(
+        help_text='Add answers for the questions above', default=get_listening_answer_default)
+
+    def __str__(self):
+        return '{self.section.section} - {self.name}'
