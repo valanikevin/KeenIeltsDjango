@@ -84,6 +84,15 @@ class ListeningTest(IndividualTestAbstract):
     def __str__(self):
         return self.name
 
+    def clean(self):
+        if self.status == "error-check":
+            for section in self.sections.all():
+                check_answers_json(section)
+
+    @property
+    def sections(self):
+        return ListeningSection.objects.filter(parent_test=self)
+
 
 class ListeningSection(IndividualSectionAbstract):
     # 4 section: each section has 10 questions.
@@ -97,12 +106,13 @@ class ListeningSection(IndividualSectionAbstract):
     def __str__(self):
         return f'{self.parent_test.name} - {self.section}'
 
-
-def check_answers_json(answers):
+# Needs to implement post_save()
+def check_answers_json(instance):
+    answers = instance.answers
     for item in answers:
         # {'question': 0, 'answer': [None]}
-
-        if not item.question:
+        print(item)
+        if not item.get('question'):
             raise ValidationError(
                 f"Some of questions are not correctly marked: {item}")
         else:
