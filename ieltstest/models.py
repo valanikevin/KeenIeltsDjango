@@ -53,7 +53,8 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 class ListeningTest(models.Model):
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
-
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?')
     def __str__(self):
         return self.test.name if self.test else ""
 
