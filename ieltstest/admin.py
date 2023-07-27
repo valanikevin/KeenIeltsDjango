@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningTest, Category
+from ieltstest.models import Test, ListeningSection, ListeningTest
 
 # Inlines
 
@@ -33,4 +33,3 @@ class ListeningSectionAdmin(admin.ModelAdmin):
 admin.site.register(ListeningSection, ListeningSectionAdmin)
 admin.site.register(ListeningTest, ListeningTestAdmin)
 admin.site.register(Test, TestAdmin)
-admin.site.register(Category)

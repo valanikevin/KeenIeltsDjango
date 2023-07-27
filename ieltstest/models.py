@@ -15,18 +15,6 @@ STATUS = (
 )
 
 
-class Category(SlugifiedBaseModal):
-    name = models.CharField(
-        max_length=200, help_text='Enter name of the Category')
-    website = models.URLField(
-        max_length=200, help_text='Enter URL of this Category', null=True, blank=True)
-    copyright = models.CharField(
-        max_length=300, help_text='Enter copyright information for this category.')
-
-    def __str__(self):
-        return self.name
-
-
 class Book(SlugifiedBaseModal, TimestampedBaseModel):
     DIFFICULTY = (
         ('beginner', 'Beginner'),
@@ -41,6 +29,10 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
         help_text='Image of the Book Cover', null=True, blank=True)
     institute = models.ForeignKey(
         CoachingInstitute, on_delete=models.SET_NULL, blank=False, null=True, help_text='Which institute has created this test?')
+    website = models.URLField(
+        max_length=200, help_text='Enter URL of this Category', null=True, blank=True)
+    copyright = models.CharField(
+        max_length=300, help_text='Enter copyright information for this category.')
 
     def __str__(self):
         return self.name
@@ -57,8 +49,6 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningTest(models.Model):
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, help_text='Select Category for this Individual Test.')
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.SET_NULL, null=True, blank=True)
 
