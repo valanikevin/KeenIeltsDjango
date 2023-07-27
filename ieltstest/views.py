@@ -1,7 +1,9 @@
 from django.shortcuts import render
-from ieltstest.variables import get_individual_test_obj_serializer_from_slug
+# from ieltstest.variables import get_individual_test_obj_serializer_from_slug
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from ieltstest.serializers import ListeningTestHomeSerializer
+from ieltstest.models import Book
 
 
 def ieltstest(request):
@@ -10,8 +12,7 @@ def ieltstest(request):
 
 @api_view(['GET'])
 def test_home(request, slug):
-    IndividualTest, IndividualTestSerializer = get_individual_test_obj_serializer_from_slug(
-        slug)
-    tests = IndividualTest.objects.order_by('-test__created_at')
-    serializer = IndividualTestSerializer(tests, many=True)
+    books = Book.objects.all()
+    serializer = ListeningTestHomeSerializer(
+        {'books': books}, context={'request': request})
     return Response(serializer.data)
