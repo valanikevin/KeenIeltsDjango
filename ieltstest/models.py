@@ -37,6 +37,10 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     def __str__(self):
         return self.name
 
+    @property
+    def tests(self):
+        return Test.objects.filter(book=self)
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -55,6 +59,7 @@ class ListeningTest(models.Model):
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?')
+
     def __str__(self):
         return self.test.name if self.test else ""
 
