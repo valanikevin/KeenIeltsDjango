@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningTest, Book
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book
 
 # Inlines
 
@@ -17,8 +17,8 @@ class ListeningSectionInline(admin.StackedInline):
     extra = 1
 
 
-class ListeningTestInline(admin.StackedInline):
-    model = ListeningTest
+class ListeningModuleInline(admin.StackedInline):
+    model = ListeningModule
     show_change_link = True
     extra = 1
 
@@ -33,11 +33,11 @@ class BookAdmin(admin.ModelAdmin):
 
 class TestAdmin(admin.ModelAdmin):
     search_fields = ['name', 'id']
-    inlines = [ListeningTestInline]
+    inlines = [ListeningModuleInline]
     exclude = ['created_at', 'updated_at']
 
 
-class ListeningTestAdmin(admin.ModelAdmin):
+class ListeningModuleAdmin(admin.ModelAdmin):
     search_fields = ['name']
     inlines = [ListeningSectionInline]
     exclude = ['created_at', 'updated_at']
@@ -49,6 +49,6 @@ class ListeningSectionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ListeningSection, ListeningSectionAdmin)
-admin.site.register(ListeningTest, ListeningTestAdmin)
+admin.site.register(ListeningModule, ListeningModuleAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(Book, BookAdmin)
