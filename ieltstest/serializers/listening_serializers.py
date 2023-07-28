@@ -26,11 +26,12 @@ class TestSerializer(serializers.ModelSerializer):
 
 
 class BookSerializer(serializers.ModelSerializer):
-    tests = TestSerializer(many=True, read_only=True)
+    tests_with_listening_module = TestSerializer(many=True, read_only=True)
 
     class Meta:
         model = Book
-        fields = '__all__'
+        fields = ['created_at', 'slug', 'name', 'difficulty', 'cover',
+                  'website', 'copyright', 'tests_with_listening_module']
 
 
 class ListeningTestHomeSerializer(serializers.Serializer):
