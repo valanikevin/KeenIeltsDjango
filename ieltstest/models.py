@@ -53,20 +53,24 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
     def __str__(self):
         return self.name
 
+    @property
+    def listening_module(self):
+        return ListeningModule.objects.filter(test=self)
 
-class ListeningTest(models.Model):
+
+class ListeningModule(models.Model):
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
     status = models.CharField(
-        choices=STATUS, help_text='What is current status of this test?')
+        choices=STATUS, help_text='What is current status of this test?', max_length=200)
 
     def __str__(self):
         return self.test.name if self.test else ""
 
     @property
     def sections(self):
-        return ListeningSection.objects.filter(parent_test=self)
-
+        return ListeningSection.objects.filter(listening_module=self)
+    
 
 class ListeningSection(models.Model):
     # 4 section: each section has 10 questions.
@@ -80,8 +84,8 @@ class ListeningSection(models.Model):
         choices=SECTION, help_text='What is section type?')
     name = models.CharField(
         max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
-    parent_test = models.ForeignKey(
-        ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
+    listening_module = models.ForeignKey(
+        ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
