@@ -17,7 +17,8 @@ class ListeningModuleBasicSerializer(serializers.ModelSerializer):
 
 
 class TestSerializer(serializers.ModelSerializer):
-    listening_module = ListeningModuleBasicSerializer(many=True, read_only=True)
+    listening_module = ListeningModuleBasicSerializer(
+        many=True, read_only=True)
 
     class Meta:
         model = Test
@@ -25,12 +26,11 @@ class TestSerializer(serializers.ModelSerializer):
 
 
 class BookSerializer(serializers.ModelSerializer):
-    tests_with_listening_module = TestSerializer(many=True, read_only=True)
+    tests = TestSerializer(many=True, read_only=True)
 
     class Meta:
         model = Book
-        fields = ['created_at', 'slug', 'name', 'difficulty', 'cover',
-                  'website', 'copyright', 'tests_with_listening_module']
+        fields = '__all__'
 
 
 class ListeningTestHomeSerializer(serializers.Serializer):
