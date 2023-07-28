@@ -41,6 +41,16 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     def tests(self):
         return Test.objects.filter(book=self)
 
+    @property
+    def tests_with_listening_module(self):
+        tests = self.tests
+        _tests = []
+        for test in tests:
+            if tests.listening_module.exists():
+                _tests.append(test)
+
+        return _tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -70,7 +80,7 @@ class ListeningModule(models.Model):
     @property
     def sections(self):
         return ListeningSection.objects.filter(listening_module=self)
-    
+
 
 class ListeningSection(models.Model):
     # 4 section: each section has 10 questions.

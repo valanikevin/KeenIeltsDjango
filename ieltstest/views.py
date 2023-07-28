@@ -2,7 +2,7 @@ from django.shortcuts import render
 # from ieltstest.variables import get_individual_test_obj_serializer_from_slug
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from ieltstest.serializers import ListeningTestHomeSerializer
+from ieltstest.serializers.listening_serializers import ListeningTestHomeSerializer
 from ieltstest.models import Book
 
 
