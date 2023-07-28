@@ -44,12 +44,13 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     @property
     def tests_with_listening_module(self):
         tests = self.tests
-        _tests = []
+        tests_ids = []
         for test in tests:
-            if tests.listening_module.exists():
-                _tests.append(test)
+            if test.listening_module.exists():
+                tests_ids.append(test.id)
 
-        return _tests
+        tests = self.tests.filter(pk__in=tests_ids)
+        return tests
 
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
@@ -58,7 +59,7 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?')
     name = models.CharField(
-        max_length=200, help_text='Test 1')
+        max_length=200, help_text='e.g. Practise Test 1')
 
     def __str__(self):
         return self.name
@@ -68,11 +69,13 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return ListeningModule.objects.filter(test=self)
 
 
-class ListeningModule(models.Model):
+class ListeningModule(SlugifiedBaseModal):
     test = models.OneToOneField(
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?', max_length=200)
+    name = models.CharField(
+        max_length=200, help_text='e.g. Listening Test March 2023')
 
     def __str__(self):
         return self.test.name if self.test else ""

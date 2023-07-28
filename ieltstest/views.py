@@ -13,6 +13,7 @@ def ieltstest(request):
 @api_view(['GET'])
 def test_home(request, slug):
     books = Book.objects.all()
+    print(books)
     serializer = ListeningTestHomeSerializer(
         {'books': books}, context={'request': request})
     return Response(serializer.data)
