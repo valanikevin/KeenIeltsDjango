@@ -14,6 +14,28 @@ STATUS = (
     ('discard', 'Discard')
 )
 
+TEST_TYPE = (
+    ('academic', 'Academic'),
+    ('general', 'General'),
+    ('both', 'Both')
+)
+
+# Abstract Models
+
+
+class IndividualModule(SlugifiedBaseModal):
+    test_type = models.CharField(
+        max_length=200, help_text='What is test type for this?', choices=TEST_TYPE)
+    test = models.OneToOneField(
+        'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?', max_length=200)
+    name = models.CharField(
+        max_length=200, help_text='e.g. Listening Test March 2023')
+
+    class Meta:
+        abstract = True
+
 
 class Book(SlugifiedBaseModal, TimestampedBaseModel):
     DIFFICULTY = (
@@ -23,6 +45,7 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     )
     name = models.CharField(
         max_length=200, help_text='What is name of the book?')
+    description = models.TextField(help_text="Add small book description.")
     difficulty = models.CharField(
         choices=DIFFICULTY, max_length=200, help_text='Difficulty level of this test')
     cover = models.ImageField(
@@ -69,13 +92,7 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return ListeningModule.objects.filter(test=self)
 
 
-class ListeningModule(SlugifiedBaseModal):
-    test = models.OneToOneField(
-        'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
-    status = models.CharField(
-        choices=STATUS, help_text='What is current status of this test?', max_length=200)
-    name = models.CharField(
-        max_length=200, help_text='e.g. Listening Test March 2023')
+class ListeningModule(IndividualModule):
 
     def __str__(self):
         return self.test.name if self.test else ""
