@@ -23,7 +23,7 @@ TEST_TYPE = (
 # Abstract Models
 
 
-class IndividualModule(SlugifiedBaseModal):
+class IndividualModuleAbstract(SlugifiedBaseModal):
     test_type = models.CharField(
         max_length=200, help_text='What is test type for this?', choices=TEST_TYPE)
     test = models.OneToOneField(
@@ -35,6 +35,25 @@ class IndividualModule(SlugifiedBaseModal):
 
     class Meta:
         abstract = True
+
+
+class IndividualModuleSectionAbstract(models.Model):
+    SECTION = (
+        ('section1', 'Section 1'),
+        ('section2', 'Section 2'),
+        ('section3', 'Section 3'),
+        ('section4', 'Section 4'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.name} - {self.section}'
 
 
 class Book(SlugifiedBaseModal, TimestampedBaseModel):
@@ -92,7 +111,7 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
         return ListeningModule.objects.filter(test=self)
 
 
-class ListeningModule(IndividualModule):
+class ListeningModule(IndividualModuleAbstract):
 
     def __str__(self):
         return self.test.name if self.test else ""
@@ -102,18 +121,9 @@ class ListeningModule(IndividualModule):
         return ListeningSection.objects.filter(listening_module=self)
 
 
-class ListeningSection(models.Model):
+class ListeningSection(IndividualModuleSectionAbstract):
     # 4 section: each section has 10 questions.
-    SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
-    )
-    section = models.CharField(
-        choices=SECTION, help_text='What is section type?')
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
@@ -121,6 +131,3 @@ class ListeningSection(models.Model):
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
-
-    def __str__(self):
-        return f'{self.name} - {self.section}'
