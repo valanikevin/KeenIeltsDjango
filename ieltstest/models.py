@@ -4,6 +4,7 @@ from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
+import time
 
 STATUS = (
     ('draft', 'Draft'),
@@ -118,12 +119,11 @@ class ListeningModule(IndividualModuleAbstract):
 
     @property
     def sections(self):
+
         return ListeningSection.objects.filter(listening_module=self)
 
 
 class ListeningSection(IndividualModuleSectionAbstract):
-    # 4 section: each section has 10 questions.
-
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
