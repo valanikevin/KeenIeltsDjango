@@ -1,12 +1,12 @@
 
 from ieltstest.models import ListeningModule
-from ieltstest.serializers.listening_serializers import ListeningModuleBasicSerializer
+from ieltstest.serializers.listening_serializers import ListeningModuleWithSectionSerializer
 
 
 def get_individual_test_obj_serializer_from_slug(slug):
     tests = [
         {'slug': 'listening', 'object': ListeningModule,
-            'serializer': ListeningModuleBasicSerializer}
+            'serializer': ListeningModuleWithSectionSerializer}
     ]
 
     obj, serializer = None, None

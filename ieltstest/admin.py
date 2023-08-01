@@ -41,11 +41,13 @@ class ListeningModuleAdmin(admin.ModelAdmin):
     search_fields = ['name']
     inlines = [ListeningSectionInline]
     exclude = ['created_at', 'updated_at']
+    list_display = ['name', 'slug']
 
 
 class ListeningSectionAdmin(admin.ModelAdmin):
     search_fields = ['test']
-    exclude = ['created_at', 'updated_at']
+    exclude = ['created_at', 'updated_at', ]
+    list_display = ['name']
 
 
 admin.site.register(ListeningSection, ListeningSectionAdmin)
