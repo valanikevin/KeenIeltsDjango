@@ -3,13 +3,26 @@ from ieltstest.models import Book, ListeningModule, Test, ListeningSection
 
 
 class ListeningSectionSerializer(serializers.ModelSerializer):
+    audio = serializers.SerializerMethodField()
 
     class Meta:
         model = ListeningSection
+        exclude = ['answers']
+
+    def get_audio(self, obj):
+        url = f'http://localhost:8000{obj.audio.url}'
+        return url
+
+
+class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
+    sections = ListeningSectionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ListeningModule
         fields = '__all__'
 
 
-class ListeningModuleBasicSerializer(serializers.ModelSerializer):
+class ListeningModuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ListeningModule
@@ -17,7 +30,7 @@ class ListeningModuleBasicSerializer(serializers.ModelSerializer):
 
 
 class TestSerializer(serializers.ModelSerializer):
-    listening_module = ListeningModuleBasicSerializer(
+    listening_module = ListeningModuleSerializer(
         many=True, read_only=True)
 
     class Meta:

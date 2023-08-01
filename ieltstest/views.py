@@ -27,12 +27,28 @@ def module_home(request, slug):
 
 @api_view(['OPTIONS'])
 @permission_classes([IsAuthenticated])
-def find_smart_test_from_book(request, test_type, book_slug):
+def find_smart_test_from_book(request, module_type, book_slug):
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
-        test_type)
+        module_type)
     print(book_slug)
     tests = IndividualModule.objects.filter(
         test__book__slug=book_slug)
+
     # TODO: Filter test for user which he has never made attempt before.
-    selected_test_slug = tests.order_by('?').first().slug
-    return Response({'selected_module': selected_test_slug})
+    selected_test_slug = tests.order_by('?')
+
+    if selected_test_slug.exists():
+        selected_test_slug = selected_test_slug.first().slug
+    else:
+        return Response(status=500)
+    return Response({'module_type': module_type, 'selected_module': selected_test_slug})
+
+
+@api_view(['OPTIONS'])
+@permission_classes([IsAuthenticated])
+def get_module(request, module_type, module_slug):
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+        module_type)
+    module = IndividualModule.objects.get(slug=module_slug)
+    serializer = IndividualModuleSerializer(module, many=False)
+    return Response(serializer.data)
