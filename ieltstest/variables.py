@@ -1,12 +1,15 @@
 
-from ieltstest.models import ListeningModule
+from ieltstest.models import ListeningModule, ListeningAttempt
 from ieltstest.serializers.listening_serializers import ListeningModuleWithSectionSerializer
 
 
 def get_individual_test_obj_serializer_from_slug(slug):
     tests = [
-        {'slug': 'listening', 'object': ListeningModule,
-            'serializer': ListeningModuleWithSectionSerializer}
+        {'slug': 'listening',
+            'object': ListeningModule,
+            'serializer': ListeningModuleWithSectionSerializer,
+            'attempt': ListeningAttempt,
+         }
     ]
 
     obj, serializer = None, None
@@ -14,4 +17,5 @@ def get_individual_test_obj_serializer_from_slug(slug):
         if test.get('slug') == slug:
             obj = test.get('object')
             serializer = test.get('serializer')
-    return (obj, serializer)
+            attempt = test.get('attempt')
+    return (obj, serializer, attempt)
