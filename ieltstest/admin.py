@@ -42,12 +42,14 @@ class ListeningModuleAdmin(admin.ModelAdmin):
     inlines = [ListeningSectionInline]
     exclude = ['created_at', 'updated_at']
     list_display = ['name', 'slug']
+    readonly_fields = ['total_questions']
 
 
 class ListeningSectionAdmin(admin.ModelAdmin):
     search_fields = ['test']
     exclude = ['created_at', 'updated_at', ]
     list_display = ['name']
+    readonly_fields = ['total_questions']
 
 
 admin.site.register(ListeningSection, ListeningSectionAdmin)

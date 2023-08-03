@@ -5,6 +5,7 @@ from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
 import time
+from django.conf import settings
 
 STATUS = (
     ('draft', 'Draft'),
@@ -139,6 +140,25 @@ class ListeningSection(IndividualModuleSectionAbstract):
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
+
+
+class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
+    STATUS = (
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('Evaluated', 'Evaluated')
+    )
+    status = models.CharField(
+        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+    module = models.ForeignKey(
+        ListeningModule, help_text='Select parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+
+    def __str__(self):
+        return f'{self.user.email} - {self.slug}'
 
 
 def update_form_fields_with_ids(module):
