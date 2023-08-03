@@ -33,6 +33,8 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
         choices=STATUS, help_text='What is current status of this test?', max_length=200)
     name = models.CharField(
         max_length=200, help_text='e.g. Listening Test March 2023')
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
 
     class Meta:
         abstract = True
@@ -49,6 +51,8 @@ class IndividualModuleSectionAbstract(models.Model):
         choices=SECTION, help_text='What is section type?')
     name = models.CharField(
         max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
 
     class Meta:
         abstract = True
@@ -122,6 +126,10 @@ class ListeningModule(IndividualModuleAbstract):
 
         return ListeningSection.objects.filter(listening_module=self)
 
+    def save(self, *args, **kwargs):
+        update_form_fields_with_ids(self)
+        super(ListeningModule, self).save(*args, **kwargs)
+
 
 class ListeningSection(IndividualModuleSectionAbstract):
     listening_module = models.ForeignKey(
@@ -131,3 +139,27 @@ class ListeningSection(IndividualModuleSectionAbstract):
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
+
+
+def update_form_fields_with_ids(module):
+    from bs4 import BeautifulSoup
+    sections = module.sections
+    counter = 0
+    for section in sections:
+        if section.questions:
+            soup = BeautifulSoup(section.questions, 'html.parser')
+            form_elements = soup.find_all(['input', 'textarea', 'select'])
+            local_counter = 0
+            for element in form_elements:
+                print(element)
+                counter = counter+1
+                local_counter = local_counter + 1
+                element['id'] = f'que-{counter}'
+                element['name'] = f'que-{counter}'
+                element['required'] = f'false'
+            section.total_questions = local_counter
+            section.questions = str(soup)
+            section.save()
+    if module.total_questions is not counter:
+        module.total_questions = counter
+        module.save()
