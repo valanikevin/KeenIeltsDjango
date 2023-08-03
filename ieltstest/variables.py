@@ -18,4 +18,5 @@ def get_individual_test_obj_serializer_from_slug(slug):
             obj = test.get('object')
             serializer = test.get('serializer')
             attempt = test.get('attempt')
-    return (obj, serializer, attempt)
+            return (obj, serializer, attempt)
+    return None

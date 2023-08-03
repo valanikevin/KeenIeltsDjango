@@ -49,7 +49,7 @@ def find_smart_test_from_book(request, module_type, book_slug):
 @api_view(['OPTIONS'])
 @permission_classes([IsAuthenticated])
 def get_module(request, module_type, module_slug):
-    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+    IndividualModule, IndividualModuleSerializer, IndividualModuleAttempt = get_individual_test_obj_serializer_from_slug(
         module_type)
     module = IndividualModule.objects.get(slug=module_slug)
     serializer = IndividualModuleSerializer(module, many=False)
