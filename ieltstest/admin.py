@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningModule, Book
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt
 
 # Inlines
 
@@ -52,7 +52,12 @@ class ListeningSectionAdmin(admin.ModelAdmin):
     readonly_fields = ['total_questions']
 
 
+class ListeningAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'slug', 'status']
+    
+
 admin.site.register(ListeningSection, ListeningSectionAdmin)
 admin.site.register(ListeningModule, ListeningModuleAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(Book, BookAdmin)
+admin.site.register(ListeningAttempt, ListeningAttemptAdmin)
