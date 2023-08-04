@@ -4,6 +4,8 @@ from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
+import time
+from django.conf import settings
 
 STATUS = (
     ('draft', 'Draft'),
@@ -14,10 +16,67 @@ STATUS = (
     ('discard', 'Discard')
 )
 
+TEST_TYPE = (
+    ('academic', 'Academic'),
+    ('general', 'General'),
+    ('both', 'Both')
+)
 
-class Category(SlugifiedBaseModal):
+# Abstract Models
+
+
+class IndividualModuleAbstract(SlugifiedBaseModal):
+    test_type = models.CharField(
+        max_length=200, help_text='What is test type for this?', choices=TEST_TYPE)
+    test = models.OneToOneField(
+        'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?', max_length=200)
     name = models.CharField(
-        max_length=200, help_text='Enter name of the Category')
+        max_length=200, help_text='e.g. Listening Test March 2023')
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
+
+    class Meta:
+        abstract = True
+
+
+class IndividualModuleSectionAbstract(models.Model):
+    SECTION = (
+        ('section1', 'Section 1'),
+        ('section2', 'Section 2'),
+        ('section3', 'Section 3'),
+        ('section4', 'Section 4'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
+    name = models.CharField(
+        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.name} - {self.section}'
+
+
+class Book(SlugifiedBaseModal, TimestampedBaseModel):
+    DIFFICULTY = (
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    )
+    name = models.CharField(
+        max_length=200, help_text='What is name of the book?')
+    description = models.TextField(help_text="Add small book description.")
+    difficulty = models.CharField(
+        choices=DIFFICULTY, max_length=200, help_text='Difficulty level of this test')
+    cover = models.ImageField(
+        help_text='Image of the Book Cover', null=True, blank=True)
+    institute = models.ForeignKey(
+        CoachingInstitute, on_delete=models.SET_NULL, blank=False, null=True, help_text='Which institute has created this test?')
     website = models.URLField(
         max_length=200, help_text='Enter URL of this Category', null=True, blank=True)
     copyright = models.CharField(
@@ -26,73 +85,138 @@ class Category(SlugifiedBaseModal):
     def __str__(self):
         return self.name
 
+    @property
+    def tests(self):
+        return Test.objects.filter(book=self)
+
+    @property
+    def tests_with_listening_module(self):
+        tests = self.tests
+        tests_ids = []
+        for test in tests:
+            if test.listening_module.exists():
+                tests_ids.append(test.id)
+
+        tests = self.tests.filter(pk__in=tests_ids)
+        return tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
-    DIFFICULTY = (
-        ('beginner', 'Beginner'),
-        ('intermediate', 'Intermediate'),
-        ('advanced', 'Advanced'),
-    )
-    is_approved = models.BooleanField(
-        default=False, help_text='Is this test approved for public?')
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, help_text='Select Category for this Test.')
+    book = models.ForeignKey(
+        Book, help_text='Select book for this test', on_delete=models.CASCADE)
+    status = models.CharField(
+        choices=STATUS, help_text='What is current status of this test?')
     name = models.CharField(
-        max_length=200, help_text='What is name of the Test? e.g. Cambridge Complete Test 11')
-    difficulty = models.CharField(
-        choices=DIFFICULTY, max_length=200, help_text='Difficulty level of this test')
-    institute = models.ForeignKey(
-        CoachingInstitute, on_delete=models.SET_NULL, blank=False, null=True, help_text='Which institute has created this test?')
+        max_length=200, help_text='e.g. Practise Test 1')
 
     def __str__(self):
         return self.name
 
+    @property
+    def listening_module(self):
+        return ListeningModule.objects.filter(test=self)
 
-class ListeningTest(models.Model):
 
-    status = models.CharField(
-        choices=STATUS, help_text='What is current status of this test?')
-    test = models.OneToOneField(
-        'Test', help_text='Select Parent Test', on_delete=models.CASCADE)
+class ListeningModule(IndividualModuleAbstract):
 
     def __str__(self):
-        return self.test.name
+        return self.test.name if self.test else ""
 
     @property
     def sections(self):
-        return ListeningSection.objects.filter(parent_test=self)
+
+        return ListeningSection.objects.filter(listening_module=self)
+
+    def save(self, *args, **kwargs):
+        update_form_fields_with_ids(self)
+        super(ListeningModule, self).save(*args, **kwargs)
 
 
-class ListeningSection(models.Model):
-    # 4 section: each section has 10 questions.
-    SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
-    )
-    name = models.CharField(
-        max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
-    section = models.CharField(
-        choices=SECTION, help_text='What is section type?')
-    parent_test = models.ForeignKey(
-        ListeningTest, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
+class ListeningSection(IndividualModuleSectionAbstract):
+    listening_module = models.ForeignKey(
+        ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio = models.FileField(help_text='Add Audio file for this section')
-
-    def __str__(self):
-        return f'{self.name} - {self.section}'
-
-
-class ListeningQuestionSet(models.Model):
-    # E.g. Complete the sentences below (Questions 14-21)
-    name = models.CharField(max_length=200, help_text='e.g. Questions 31-40')
-    section = models.ForeignKey(ListeningSection, on_delete=models.CASCADE,
-                                help_text='Select Section for this Question Set')
-
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
 
+
+class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
+    STATUS = (
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('Evaluated', 'Evaluated')
+    )
+    status = models.CharField(
+        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+    module = models.ForeignKey(
+        ListeningModule, help_text='Select parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+    evaluation = models.JSONField(
+        null=True, blank=True, help_text='Evaluation of the attempt')
+    
+
     def __str__(self):
-        return f'{self.section.section} - {self.name}'
+        return f'{self.user.email} - {self.slug}'
+
+    def save(self, *args, **kwargs):
+        if self.status == "Completed":
+            check_listening_answers(self)
+        return super(ListeningAttempt, self).save(*args, **kwargs)
+
+
+def update_form_fields_with_ids(module):
+    from bs4 import BeautifulSoup
+    sections = module.sections
+    counter = 0
+    for section in sections:
+        if section.questions:
+            soup = BeautifulSoup(section.questions, 'html.parser')
+            form_elements = soup.find_all(['input', 'textarea', 'select'])
+            local_counter = 0
+            for element in form_elements:
+                print(element)
+                counter = counter+1
+                local_counter = local_counter + 1
+                element['id'] = f'que-{counter}'
+                element['name'] = f'que-{counter}'
+                element['required'] = f'false'
+            section.total_questions = local_counter
+            section.questions = str(soup)
+            section.save()
+    if module.total_questions is not counter:
+        module.total_questions = counter
+        module.save()
+
+
+def check_listening_answers(attempt):
+    evaluation = {}
+    counter = 0
+    correct_answers_count = 0
+    incorrect_answers_count = 0
+    for section in attempt.module.sections:
+        answers = section.answers
+        for answer in answers:
+            _evaluation = {}
+            counter = counter + 1
+            correct_answer = answer['answer']  # List
+            user_answer = str(attempt.answers.get(
+                f"que-{counter}"))
+            is_user_answer_correct = False
+            print(f'USER: {user_answer}')
+            if any(s.lower() == user_answer.lower() for s in correct_answer):
+                is_user_answer_correct = True
+                correct_answers_count = correct_answers_count + 1
+            else:
+                incorrect_answers_count = incorrect_answers_count + 1
+
+            _evaluation['correct_answer'] = correct_answer
+            _evaluation['user_answer'] = user_answer
+            _evaluation['is_user_answer_correct'] = is_user_answer_correct
+            evaluation[f'que-{counter}'] = _evaluation
+
+    print(f'{evaluation}\nCorrect: {correct_answers_count}\nIncorrect: {incorrect_answers_count}')
