@@ -14,8 +14,24 @@ class ListeningSectionSerializer(serializers.ModelSerializer):
         return url
 
 
+class BookSerializerBasic(serializers.ModelSerializer):
+
+    class Meta:
+        model = Book
+        fields = '__all__'
+
+
+class TestWithBookSerializer(serializers.ModelSerializer):
+    book = BookSerializerBasic(many=False, read_only=True)
+
+    class Meta:
+        model = Test
+        fields = '__all__'
+
+
 class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
     sections = ListeningSectionSerializer(many=True, read_only=True)
+    test = TestWithBookSerializer(many=False, read_only=True)
 
     class Meta:
         model = ListeningModule

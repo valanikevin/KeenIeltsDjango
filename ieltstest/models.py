@@ -156,9 +156,17 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
         ListeningModule, help_text='Select parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
+    evaluation = models.JSONField(
+        null=True, blank=True, help_text='Evaluation of the attempt')
+    
 
     def __str__(self):
         return f'{self.user.email} - {self.slug}'
+
+    def save(self, *args, **kwargs):
+        if self.status == "Completed":
+            check_listening_answers(self)
+        return super(ListeningAttempt, self).save(*args, **kwargs)
 
 
 def update_form_fields_with_ids(module):
@@ -183,3 +191,32 @@ def update_form_fields_with_ids(module):
     if module.total_questions is not counter:
         module.total_questions = counter
         module.save()
+
+
+def check_listening_answers(attempt):
+    evaluation = {}
+    counter = 0
+    correct_answers_count = 0
+    incorrect_answers_count = 0
+    for section in attempt.module.sections:
+        answers = section.answers
+        for answer in answers:
+            _evaluation = {}
+            counter = counter + 1
+            correct_answer = answer['answer']  # List
+            user_answer = str(attempt.answers.get(
+                f"que-{counter}"))
+            is_user_answer_correct = False
+            print(f'USER: {user_answer}')
+            if any(s.lower() == user_answer.lower() for s in correct_answer):
+                is_user_answer_correct = True
+                correct_answers_count = correct_answers_count + 1
+            else:
+                incorrect_answers_count = incorrect_answers_count + 1
+
+            _evaluation['correct_answer'] = correct_answer
+            _evaluation['user_answer'] = user_answer
+            _evaluation['is_user_answer_correct'] = is_user_answer_correct
+            evaluation[f'que-{counter}'] = _evaluation
+
+    print(f'{evaluation}\nCorrect: {correct_answers_count}\nIncorrect: {incorrect_answers_count}')
