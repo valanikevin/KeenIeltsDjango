@@ -73,4 +73,8 @@ def update_attempt(request, module_type, attempt_slug):
     attempt.status = attempt_type
     attempt.save()
 
-    return Response(body)
+    data = {
+        'status': attempt.status,
+    }
+
+    return Response(data=data)

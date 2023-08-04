@@ -118,6 +118,8 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningModule(IndividualModuleAbstract):
+    audio = models.FileField(
+        help_text='Add Audio file, all section merged in one audio')
 
     def __str__(self):
         return self.test.name if self.test else ""
@@ -135,7 +137,8 @@ class ListeningModule(IndividualModuleAbstract):
 class ListeningSection(IndividualModuleSectionAbstract):
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
-    audio = models.FileField(help_text='Add Audio file for this section')
+    audio_start_time = models.DecimalField(
+        decimal_places=2, max_digits=20, default=0.0, help_text='When should audio start for this section? 18.45 (18 seconds)')
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
@@ -158,15 +161,16 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation = models.JSONField(
         null=True, blank=True, help_text='Evaluation of the attempt')
-    
+    correct_answers = models.PositiveIntegerField(default=0)
+    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f'{self.user.email} - {self.slug}'
 
     def save(self, *args, **kwargs):
         if self.status == "Completed":
-            check_listening_answers(self)
-        return super(ListeningAttempt, self).save(*args, **kwargs)
+            attempt = check_listening_answers(self)
+        return super(ListeningAttempt, attempt).save(*args, **kwargs)
 
 
 def update_form_fields_with_ids(module):
@@ -207,7 +211,6 @@ def check_listening_answers(attempt):
             user_answer = str(attempt.answers.get(
                 f"que-{counter}"))
             is_user_answer_correct = False
-            print(f'USER: {user_answer}')
             if any(s.lower() == user_answer.lower() for s in correct_answer):
                 is_user_answer_correct = True
                 correct_answers_count = correct_answers_count + 1
@@ -218,5 +221,8 @@ def check_listening_answers(attempt):
             _evaluation['user_answer'] = user_answer
             _evaluation['is_user_answer_correct'] = is_user_answer_correct
             evaluation[f'que-{counter}'] = _evaluation
-
-    print(f'{evaluation}\nCorrect: {correct_answers_count}\nIncorrect: {incorrect_answers_count}')
+    attempt.evaluation = evaluation
+    attempt.correct_answers = correct_answers_count
+    attempt.incorrect_answers = incorrect_answers_count
+    attempt.status = "Evaluated"
+    return attempt
