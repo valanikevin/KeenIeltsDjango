@@ -222,10 +222,13 @@ def check_listening_answers(attempt):
             _evaluation['user_answer'] = user_answer
             _evaluation['is_user_answer_correct'] = is_user_answer_correct
             evaluation[f'que-{counter}'] = _evaluation
+
     attempt.evaluation = evaluation
     attempt.correct_answers = correct_answers_count
     attempt.incorrect_answers = incorrect_answers_count
     attempt.status = "Evaluated"
+    attempt.bands = get_listening_ielts_score(
+        correct_answers_count, counter)
     return attempt
 
 

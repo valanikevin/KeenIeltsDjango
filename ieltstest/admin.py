@@ -53,8 +53,8 @@ class ListeningSectionAdmin(admin.ModelAdmin):
 
 
 class ListeningAttemptAdmin(admin.ModelAdmin):
-    list_display = ['user', 'slug', 'status']
-    
+    list_display = ['user', 'slug', 'status', 'bands']
+
 
 admin.site.register(ListeningSection, ListeningSectionAdmin)
 admin.site.register(ListeningModule, ListeningModuleAdmin)
