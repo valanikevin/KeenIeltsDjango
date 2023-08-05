@@ -126,8 +126,7 @@ class ListeningModule(IndividualModuleAbstract):
 
     @property
     def sections(self):
-
-        return ListeningSection.objects.filter(listening_module=self)
+        return ListeningSection.objects.filter(listening_module=self).order_by('section')
 
     def save(self, *args, **kwargs):
         update_form_fields_with_ids(self)
@@ -161,6 +160,7 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation = models.JSONField(
         null=True, blank=True, help_text='Evaluation of the attempt')
+    bands = models.DecimalField(default=0.0, decimal_places=1, max_digits=2)
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
 
@@ -170,7 +170,8 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
     def save(self, *args, **kwargs):
         if self.status == "Completed":
             attempt = check_listening_answers(self)
-        return super(ListeningAttempt, attempt).save(*args, **kwargs)
+            return super(ListeningAttempt, attempt).save(*args, **kwargs)
+        return super(ListeningAttempt, self).save(*args, **kwargs)
 
 
 def update_form_fields_with_ids(module):
@@ -226,3 +227,26 @@ def check_listening_answers(attempt):
     attempt.incorrect_answers = incorrect_answers_count
     attempt.status = "Evaluated"
     return attempt
+
+
+def get_listening_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        39: 9,
+        37: 8.5,
+        35: 8,
+        32: 7.5,
+        30: 7,
+        26: 6.5,
+        23: 6,
+        18: 5.5,
+        16: 5,
+        13: 4.5,
+        10: 4,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
