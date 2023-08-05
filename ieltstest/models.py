@@ -172,7 +172,7 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
         null=True, blank=True, help_text='Evaluation of the attempt')
     time_taken = models.PositiveIntegerField(
         default=0, help_text='How much time did user take to complete the test? In minutes.')
-    bands = models.DecimalField(default=0.0, decimal_places=1, max_digits=2)
+    bands = models.FloatField(default=0.0, )
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
 
