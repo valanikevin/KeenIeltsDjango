@@ -4,7 +4,7 @@ from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
-import time
+from django.utils import timezone
 from django.conf import settings
 
 STATUS = (
@@ -133,7 +133,17 @@ class ListeningModule(IndividualModuleAbstract):
         super(ListeningModule, self).save(*args, **kwargs)
 
 
+class ListeningSectionQuestionType(models.Model):
+    name = models.CharField(
+        max_length=200, help_text='Name of the question type. E.g. True/False, Match the topic, etc')
+
+    def __str__(self):
+        return self.name
+
+
 class ListeningSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        ListeningSectionQuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio_start_time = models.DecimalField(
@@ -160,6 +170,8 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation = models.JSONField(
         null=True, blank=True, help_text='Evaluation of the attempt')
+    time_taken = models.PositiveIntegerField(
+        default=0, help_text='How much time did user take to complete the test? In minutes.')
     bands = models.DecimalField(default=0.0, decimal_places=1, max_digits=2)
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
@@ -199,12 +211,16 @@ def update_form_fields_with_ids(module):
 
 
 def check_listening_answers(attempt):
+    complete_evaluation = {}
     evaluation = {}
     counter = 0
     correct_answers_count = 0
     incorrect_answers_count = 0
     for section in attempt.module.sections:
         answers = section.answers
+        section_evaluation = {}
+        section_correct = 0
+        section_incorrect = 0
         for answer in answers:
             _evaluation = {}
             counter = counter + 1
@@ -215,20 +231,37 @@ def check_listening_answers(attempt):
             if any(s.lower() == user_answer.lower() for s in correct_answer):
                 is_user_answer_correct = True
                 correct_answers_count = correct_answers_count + 1
+                section_correct = section_correct + 1
             else:
                 incorrect_answers_count = incorrect_answers_count + 1
+                section_incorrect = section_incorrect + 1
 
             _evaluation['correct_answer'] = correct_answer
             _evaluation['user_answer'] = user_answer
             _evaluation['is_user_answer_correct'] = is_user_answer_correct
             evaluation[f'que-{counter}'] = _evaluation
+            section_evaluation[f'que-{counter}'] = _evaluation
 
-    attempt.evaluation = evaluation
+        section_evaluation['correct'] = section_correct
+        section_evaluation['incorrect'] = section_incorrect
+        section_evaluation['total_questions'] = section_correct + \
+            section_incorrect
+        section_evaluation['question_type'] = section.question_type.name
+
+        complete_evaluation[section.section] = section_evaluation
+
+    complete_evaluation['all_questions'] = evaluation
+
+    # Assignments
+    timetaken = round(
+        (timezone.now() - attempt.created_at).total_seconds() / 60)
+    attempt.evaluation = complete_evaluation
     attempt.correct_answers = correct_answers_count
     attempt.incorrect_answers = incorrect_answers_count
     attempt.status = "Evaluated"
     attempt.bands = get_listening_ielts_score(
         correct_answers_count, counter)
+    attempt.time_taken = timetaken
     return attempt
 
 
