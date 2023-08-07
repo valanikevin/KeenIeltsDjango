@@ -213,9 +213,13 @@ def update_form_fields_with_ids(module):
 def check_listening_answers(attempt):
     complete_evaluation = {}
     evaluation = {}
+    sections = []
     counter = 0
     correct_answers_count = 0
     incorrect_answers_count = 0
+    best_scored_section = ('', 0)
+    worst_scored_section = ('', float('inf'))
+
     for section in attempt.module.sections:
         answers = section.answers
         section_evaluation = {}
@@ -247,10 +251,20 @@ def check_listening_answers(attempt):
         section_evaluation['total_questions'] = section_correct + \
             section_incorrect
         section_evaluation['question_type'] = section.question_type.name
+        sections.append(section_evaluation)
 
-        complete_evaluation[section.section] = section_evaluation
+        # Update best and worst scored sections if needed
+        if section_correct > best_scored_section[1]:
+            best_scored_section = (section.section, section_correct)
+        if section_correct < worst_scored_section[1]:
+            worst_scored_section = (section.section, section_correct)
 
     complete_evaluation['all_questions'] = evaluation
+    complete_evaluation['all_sections'] = sections
+
+    # Add the best and worst scored sections to the evaluation
+    complete_evaluation['best_scored_section'] = best_scored_section
+    complete_evaluation['worst_scored_section'] = worst_scored_section
 
     # Assignments
     timetaken = round(

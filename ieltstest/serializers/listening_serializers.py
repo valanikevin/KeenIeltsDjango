@@ -63,14 +63,35 @@ class BookSerializer(serializers.ModelSerializer):
                   'website', 'copyright', 'tests_with_listening_module']
 
 
+class BookModuleSerializer(serializers.ModelSerializer):
+    tests = serializers.SerializerMethodField()
+    cover = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Book
+        fields = ['created_at', 'slug', 'name', 'description', 'difficulty', 'cover',
+                  'website', 'copyright', 'tests']
+
+    def get_tests(self, obj):
+        get_tests_function = {
+            'listening': obj.tests_with_listening_module,
+        }
+
+        module_slug = self.context.get('module_slug')
+
+        serializer = TestSerializer(
+            get_tests_function.get(module_slug), many=True)
+
+        return serializer.data
+
+    def get_cover(self, obj):
+        return f'http://localhost:8000{obj.cover.url}'
+
+
 class BookBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = ['slug', 'name', 'difficulty', 'cover']
-
-
-class ListeningTestHomeSerializer(serializers.Serializer):
-    books = BookSerializer(many=True, read_only=True)
 
 
 class ListeningAttemptSerializer(serializers.ModelSerializer):
