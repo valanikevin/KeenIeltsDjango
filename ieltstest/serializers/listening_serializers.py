@@ -73,14 +73,14 @@ class BookModuleSerializer(serializers.ModelSerializer):
                   'website', 'copyright', 'tests']
 
     def get_tests(self, obj):
-        get_tests_function = {
-            'listening': obj.tests_with_listening_module,
-        }
-
         module_slug = self.context.get('module_slug')
+        if module_slug == 'listening':
+            tests = obj.tests_with_listening_module
+        elif module_slug == 'reading':
+            tests = obj.tests_with_reading_module
 
         serializer = TestSerializer(
-            get_tests_function.get(module_slug), many=True)
+            tests, many=True)
 
         return serializer.data
 
