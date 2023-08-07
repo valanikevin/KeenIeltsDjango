@@ -43,10 +43,10 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
 
 class IndividualModuleSectionAbstract(models.Model):
     SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
+        ('Section 1', 'Section 1'),
+        ('Section 2', 'Section 2'),
+        ('Section 3', 'Section 3'),
+        ('Section 4', 'Section 4'),
     )
     section = models.CharField(
         choices=SECTION, help_text='What is section type?')
