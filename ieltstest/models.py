@@ -133,12 +133,6 @@ class ListeningModule(IndividualModuleAbstract):
         super(ListeningModule, self).save(*args, **kwargs)
 
 
-class ReadingModule(IndividualModuleAbstract):
-
-    def __str__(self):
-        return self.test.name if self.test else ""
-
-
 class ListeningSectionQuestionType(models.Model):
     name = models.CharField(
         max_length=200, help_text='Name of the question type. E.g. True/False, Match the topic, etc')
@@ -190,6 +184,26 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
             attempt = check_listening_answers(self)
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
+
+
+class ReadingModule(IndividualModuleAbstract):
+    passage = RichTextUploadingField(
+        help_text='Add passage for this section')
+    questions = RichTextUploadingField(
+        help_text='Add questions with form elements and correct ids')
+    answers = models.JSONField(
+        help_text='Add answers for the questions above', default=get_listening_answer_default)
+
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+
+class ReadingSection(IndividualModuleSectionAbstract):
+    reading_module = models.ForeignKey(
+        ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
+
+    def __str__(self):
+        return self.name
 
 
 def update_form_fields_with_ids(module):
