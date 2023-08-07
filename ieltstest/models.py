@@ -133,6 +133,12 @@ class ListeningModule(IndividualModuleAbstract):
         super(ListeningModule, self).save(*args, **kwargs)
 
 
+class ReadingModule(IndividualModuleAbstract):
+
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+
 class ListeningSectionQuestionType(models.Model):
     name = models.CharField(
         max_length=200, help_text='Name of the question type. E.g. True/False, Match the topic, etc')
