@@ -54,15 +54,6 @@ class TestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BookSerializer(serializers.ModelSerializer):
-    tests_with_listening_module = TestSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Book
-        fields = ['created_at', 'slug', 'name', 'description', 'difficulty', 'cover',
-                  'website', 'copyright', 'tests_with_listening_module']
-
-
 class BookModuleSerializer(serializers.ModelSerializer):
     tests = serializers.SerializerMethodField()
     cover = serializers.SerializerMethodField()

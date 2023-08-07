@@ -91,13 +91,12 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
     @property
     def tests_with_listening_module(self):
-        tests = self.tests
-        tests_ids = []
-        for test in tests:
-            if test.listening_module.exists():
-                tests_ids.append(test.id)
+        tests = self.tests.filter(listeningmodule__test__isnull=False)
+        return tests
 
-        tests = self.tests.filter(pk__in=tests_ids)
+    @property
+    def tests_with_reading_module(self):
+        tests = self.tests.filter(readingmodule__test__isnull=False)
         return tests
 
 
