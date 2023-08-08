@@ -186,20 +186,28 @@ class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
 
 
 class ReadingModule(IndividualModuleAbstract):
+
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    def save(self, *args, **kwargs):
+        update_form_fields_with_ids(self)
+        super(ReadingModule, self).save(*args, **kwargs)
+
+    @property
+    def sections(self):
+        return ReadingSection.objects.filter(reading_module=self).order_by('section')
+
+
+class ReadingSection(IndividualModuleSectionAbstract):
+    reading_module = models.ForeignKey(
+        ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
     passage = RichTextUploadingField(
         help_text='Add passage for this section')
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
-
-    def __str__(self):
-        return self.test.name if self.test else ""
-
-
-class ReadingSection(IndividualModuleSectionAbstract):
-    reading_module = models.ForeignKey(
-        ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
 
     def __str__(self):
         return self.name
