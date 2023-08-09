@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection
 
 
 class ListeningSectionSerializer(serializers.ModelSerializer):
@@ -94,3 +94,12 @@ class ListeningAttemptSerializer(serializers.ModelSerializer):
 
     def get_book(self, instance):
         return BookBasicSerializer(instance.module.test.book, many=False).data
+
+
+class ReadingModuleWithSectionSerializer(serializers.ModelSerializer):
+    sections = ListeningSectionSerializer(many=True, read_only=True)
+    test = TestWithBookSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = ReadingModule
+        fields = '__all__'
