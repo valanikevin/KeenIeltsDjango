@@ -184,14 +184,17 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
 
-    def __str__(self):
-        return f'{self.user.email} - {self.slug}'
 
     def save(self, *args, **kwargs):
         if self.status == "Completed":
             attempt = check_listening_answers(self)
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
+
+
+class ReadingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'ReadingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
 
 
 class ReadingModule(IndividualModuleAbstract):
