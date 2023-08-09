@@ -62,6 +62,29 @@ class IndividualModuleSectionAbstract(models.Model):
         return f'{self.name} - {self.section}'
 
 
+class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
+    STATUS = (
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('Evaluated', 'Evaluated')
+    )
+    status = models.CharField(
+        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+    evaluation = models.JSONField(
+        null=True, blank=True, help_text='Evaluation of the attempt')
+    time_taken = models.PositiveIntegerField(
+        default=0, help_text='How much time did user take to complete the test? In minutes.')
+    bands = models.FloatField(default=0.0, )
+
+    def __str__(self):
+        return f'{self.user.email} - {self.slug}'
+
+    class Meta:
+        abstract = True
+
+
 class Book(SlugifiedBaseModal, TimestampedBaseModel):
     DIFFICULTY = (
         ('beginner', 'Beginner'),
@@ -153,25 +176,11 @@ class ListeningSection(IndividualModuleSectionAbstract):
         help_text='Add answers for the questions above', default=get_listening_answer_default)
 
 
-class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
-    STATUS = (
-        ('In Progress', 'In Progress'),
-        ('Completed', 'Completed'),
-        ('Evaluated', 'Evaluated')
-    )
-    status = models.CharField(
-        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+class ListeningAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         ListeningModule, help_text='Select parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
-    evaluation = models.JSONField(
-        null=True, blank=True, help_text='Evaluation of the attempt')
-    time_taken = models.PositiveIntegerField(
-        default=0, help_text='How much time did user take to complete the test? In minutes.')
-    bands = models.FloatField(default=0.0, )
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
 
@@ -217,21 +226,36 @@ def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
     sections = module.sections
     counter = 0
+    processed_radio_names = {}
     for section in sections:
         if section.questions:
             soup = BeautifulSoup(section.questions, 'html.parser')
             form_elements = soup.find_all(['input', 'textarea', 'select'])
             local_counter = 0
             for element in form_elements:
+                if element.name == 'input' and element.get('type') == 'radio':
+                    radio_name = element['name']
+                    print(f'RADIO: {radio_name}')
+                    if processed_radio_names.get(radio_name):
+                        element['name'] = f'que-{processed_radio_names.get(radio_name)}'
+                        element['required'] = f'false'
+                    else:
+                        counter = counter + 1
+                        processed_radio_names[radio_name] = counter
+                        element['name'] = f'que-{counter}'
+                        element['required'] = f'false'
+
+                else:
+                    counter = counter+1
+                    local_counter = local_counter + 1
+                    # element['id'] = f'que-{counter}'
+                    element['name'] = f'que-{counter}'
+                    element['required'] = f'false'
                 print(element)
-                counter = counter+1
-                local_counter = local_counter + 1
-                element['id'] = f'que-{counter}'
-                element['name'] = f'que-{counter}'
-                element['required'] = f'false'
             section.total_questions = local_counter
             section.questions = str(soup)
             section.save()
+
     if module.total_questions is not counter:
         module.total_questions = counter
         module.save()
