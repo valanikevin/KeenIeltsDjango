@@ -187,6 +187,8 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
     def save(self, *args, **kwargs):
         if self.status == "Completed":
             attempt = check_answers(self)
+            attempt.bands = get_listening_ielts_score(
+                attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
 
@@ -334,8 +336,7 @@ def check_answers(attempt):
     attempt.correct_answers = correct_answers_count
     attempt.incorrect_answers = incorrect_answers_count
     attempt.status = "Evaluated"
-    attempt.bands = get_listening_ielts_score(
-        correct_answers_count, counter)
+
     attempt.time_taken = timetaken
     return attempt
 
