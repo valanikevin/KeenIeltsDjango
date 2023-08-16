@@ -200,6 +200,12 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
     def save(self, *args, **kwargs):
         if self.status == "Completed":
             attempt = check_answers(self)
+            if attempt.module.test_type == 'academic':
+                attempt.bands = get_reading_academic_ielts_score(
+                    attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
+            else:
+                attempt.bands = get_reading_general_ielts_score(
+                    attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
             return super(ReadingAttempt, attempt).save(*args, **kwargs)
         return super(ReadingAttempt, self).save(*args, **kwargs)
 
