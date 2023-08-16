@@ -8,6 +8,11 @@ class ListeningSectionSerializer(serializers.ModelSerializer):
         model = ListeningSection
         exclude = ['answers']
 
+class ReadingSectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ReadingSection
+        exclude = ['answers']
 
 class BookSerializerBasic(serializers.ModelSerializer):
 
@@ -108,7 +113,7 @@ class ReadingAttemptSerializer(serializers.ModelSerializer):
 
 
 class ReadingModuleWithSectionSerializer(serializers.ModelSerializer):
-    sections = ListeningSectionSerializer(many=True, read_only=True)
+    sections = ReadingSectionSerializer(many=True, read_only=True)
     test = TestWithBookSerializer(many=False, read_only=True)
 
     class Meta:

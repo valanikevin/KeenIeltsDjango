@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, ListeningSectionQuestionType, ReadingModule, ReadingSection
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection
 
 # Inlines
 
@@ -86,7 +86,7 @@ admin.site.register(Book, BookAdmin)
 
 # Listening
 admin.site.register(ListeningAttempt, ListeningAttemptAdmin)
-admin.site.register(ListeningSectionQuestionType)
+admin.site.register(QuestionType)
 admin.site.register(ListeningSection, SectionAdmin)
 admin.site.register(ListeningModule, ListeningModuleAdmin)
 
