@@ -155,7 +155,7 @@ class ListeningModule(IndividualModuleAbstract):
         super(ListeningModule, self).save(*args, **kwargs)
 
 
-class ListeningSectionQuestionType(models.Model):
+class QuestionType(models.Model):
     name = models.CharField(
         max_length=200, help_text='Name of the question type. E.g. True/False, Match the topic, etc')
 
@@ -165,7 +165,7 @@ class ListeningSectionQuestionType(models.Model):
 
 class ListeningSection(IndividualModuleSectionAbstract):
     question_type = models.ForeignKey(
-        ListeningSectionQuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio_start_time = models.DecimalField(
@@ -184,10 +184,9 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
     correct_answers = models.PositiveIntegerField(default=0)
     incorrect_answers = models.PositiveIntegerField(default=0)
 
-
     def save(self, *args, **kwargs):
         if self.status == "Completed":
-            attempt = check_listening_answers(self)
+            attempt = check_answers(self)
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
 
@@ -195,6 +194,12 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
 class ReadingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'ReadingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if self.status == "Completed":
+            attempt = check_answers(self)
+            return super(ReadingAttempt, attempt).save(*args, **kwargs)
+        return super(ReadingAttempt, self).save(*args, **kwargs)
 
 
 class ReadingModule(IndividualModuleAbstract):
@@ -212,6 +217,8 @@ class ReadingModule(IndividualModuleAbstract):
 
 
 class ReadingSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     reading_module = models.ForeignKey(
         ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
     passage = RichTextUploadingField(
@@ -264,7 +271,7 @@ def update_form_fields_with_ids(module):
         module.save()
 
 
-def check_listening_answers(attempt):
+def check_answers(attempt):
     complete_evaluation = {}
     evaluation = {}
     sections = []
@@ -347,6 +354,55 @@ def get_listening_ielts_score(correct, total=40):
         16: 5,
         13: 4.5,
         10: 4,
+        0: 0,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
+
+
+def get_reading_academic_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        39: 9,
+        37: 8.5,
+        35: 8,
+        33: 7.5,
+        30: 7,
+        27: 6.5,
+        23: 6,
+        19: 5.5,
+        15: 5,
+        13: 4.5,
+        10: 4,
+        0: 0,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
+
+
+def get_reading_general_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        40: 9,
+        39: 8.5,
+        37: 8,
+        36: 7.5,
+        34: 7,
+        32: 6.5,
+        30: 6,
+        27: 5.5,
+        23: 5,
+        19: 4.5,
+        15: 4,
+        0: 0,
     }
 
     for map in score_map:
