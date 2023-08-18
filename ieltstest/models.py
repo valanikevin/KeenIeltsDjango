@@ -117,9 +117,14 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
         tests = self.tests.filter(listeningmodule__test__isnull=False)
         return tests
 
-    @property
-    def tests_with_reading_module(self):
-        tests = self.tests.filter(readingmodule__test__isnull=False)
+    def tests_with_reading_module(self, user):
+        student_type = user.student.type if user.id else None
+        if student_type:
+            tests = self.tests.filter(
+                readingmodule__test__isnull=False, readingmodule__test_type=student_type)
+        else:
+            tests = self.tests.filter(readingmodule__test__isnull=False)
+
         return tests
 
 

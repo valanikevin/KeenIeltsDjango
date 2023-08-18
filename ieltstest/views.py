@@ -21,7 +21,7 @@ def get_books():
 def module_home(request, slug):
     books = get_books()
     serializer = BookModuleSerializer(
-        books, context={'module_slug': slug}, many=True)
+        books, context={'module_slug': slug, 'user': request.user}, many=True)
     return Response(serializer.data)
 
 

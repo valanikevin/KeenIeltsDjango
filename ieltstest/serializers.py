@@ -8,11 +8,13 @@ class ListeningSectionSerializer(serializers.ModelSerializer):
         model = ListeningSection
         exclude = ['answers']
 
+
 class ReadingSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReadingSection
         exclude = ['answers']
+
 
 class BookSerializerBasic(serializers.ModelSerializer):
 
@@ -70,10 +72,11 @@ class BookModuleSerializer(serializers.ModelSerializer):
 
     def get_tests(self, obj):
         module_slug = self.context.get('module_slug')
+        user = self.context.get('user')
         if module_slug == 'listening':
             tests = obj.tests_with_listening_module
         elif module_slug == 'reading':
-            tests = obj.tests_with_reading_module
+            tests = obj.tests_with_reading_module(user)
 
         serializer = TestSerializer(
             tests, many=True)
