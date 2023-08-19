@@ -19,6 +19,7 @@ def get_books():
 
 @api_view(['GET'])
 def module_home(request, slug):
+    print(f'MODULE: {slug}')
     books = get_books()
     serializer = BookModuleSerializer(
         books, context={'module_slug': slug, 'user': request.user}, many=True)
