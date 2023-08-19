@@ -254,14 +254,14 @@ class WritingModule(IndividualModuleAbstract):
         return WritingSection.objects.filter(writing_module=self).order_by('section')
 
 
-
-
 class WritingSection(IndividualModuleSectionAbstract):
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     writing_module = models.ForeignKey(
         WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
-
+    questions = RichTextUploadingField(
+        help_text='Add questions with images for writing module')
+    
     def __str__(self):
         return self.name
 
@@ -276,6 +276,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 # Speaking Module
 # Speaking Section
 # Speaking Attempt
+
 
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
