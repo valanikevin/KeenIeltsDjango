@@ -245,6 +245,38 @@ class ReadingSection(IndividualModuleSectionAbstract):
         return self.name
 
 
+class WritingModule(IndividualModuleAbstract):
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    @property
+    def sections(self):
+        return WritingSection.objects.filter(writing_module=self).order_by('section')
+
+
+
+
+class WritingSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+    writing_module = models.ForeignKey(
+        WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+
+    def __str__(self):
+        return self.name
+
+
+class WritingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        return super(WritingModule, self).save(*args, **kwargs)
+
+# Speaking Module
+# Speaking Section
+# Speaking Attempt
+
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
     sections = module.sections
