@@ -4,7 +4,7 @@ from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
-import time
+from django.utils import timezone
 from django.conf import settings
 
 STATUS = (
@@ -43,10 +43,10 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
 
 class IndividualModuleSectionAbstract(models.Model):
     SECTION = (
-        ('section1', 'Section 1'),
-        ('section2', 'Section 2'),
-        ('section3', 'Section 3'),
-        ('section4', 'Section 4'),
+        ('Section 1', 'Section 1'),
+        ('Section 2', 'Section 2'),
+        ('Section 3', 'Section 3'),
+        ('Section 4', 'Section 4'),
     )
     section = models.CharField(
         choices=SECTION, help_text='What is section type?')
@@ -60,6 +60,29 @@ class IndividualModuleSectionAbstract(models.Model):
 
     def __str__(self):
         return f'{self.name} - {self.section}'
+
+
+class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
+    STATUS = (
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('Evaluated', 'Evaluated')
+    )
+    status = models.CharField(
+        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+    evaluation = models.JSONField(
+        null=True, blank=True, help_text='Evaluation of the attempt')
+    time_taken = models.PositiveIntegerField(
+        default=0, help_text='How much time did user take to complete the test? In minutes.')
+    bands = models.FloatField(default=0.0, )
+
+    def __str__(self):
+        return f'{self.user.email} - {self.slug}'
+
+    class Meta:
+        abstract = True
 
 
 class Book(SlugifiedBaseModal, TimestampedBaseModel):
@@ -91,13 +114,17 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
     @property
     def tests_with_listening_module(self):
-        tests = self.tests
-        tests_ids = []
-        for test in tests:
-            if test.listening_module.exists():
-                tests_ids.append(test.id)
+        tests = self.tests.filter(listeningmodule__test__isnull=False)
+        return tests
 
-        tests = self.tests.filter(pk__in=tests_ids)
+    def tests_with_reading_module(self, user):
+        student_type = user.student.type if user.id else None
+        if student_type:
+            tests = self.tests.filter(
+                readingmodule__test__isnull=False, readingmodule__test_type=student_type)
+        else:
+            tests = self.tests.filter(readingmodule__test__isnull=False)
+
         return tests
 
 
@@ -118,88 +145,192 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningModule(IndividualModuleAbstract):
+    audio = models.FileField(
+        help_text='Add Audio file, all section merged in one audio')
 
     def __str__(self):
         return self.test.name if self.test else ""
 
     @property
     def sections(self):
-
-        return ListeningSection.objects.filter(listening_module=self)
+        return ListeningSection.objects.filter(listening_module=self).order_by('section')
 
     def save(self, *args, **kwargs):
         update_form_fields_with_ids(self)
         super(ListeningModule, self).save(*args, **kwargs)
 
 
+class QuestionType(models.Model):
+    name = models.CharField(
+        max_length=200, help_text='Name of the question type. E.g. True/False, Match the topic, etc')
+
+    def __str__(self):
+        return self.name
+
+
 class ListeningSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
-    audio = models.FileField(help_text='Add Audio file for this section')
+    audio_start_time = models.DecimalField(
+        decimal_places=2, max_digits=20, default=0.0, help_text='When should audio start for this section? 18.45 (18 seconds)')
     questions = RichTextUploadingField(
         help_text='Add questions with form elements and correct ids')
     answers = models.JSONField(
         help_text='Add answers for the questions above', default=get_listening_answer_default)
 
 
-class ListeningAttempt(TimestampedBaseModel, SlugifiedBaseModal):
-    STATUS = (
-        ('In Progress', 'In Progress'),
-        ('Completed', 'Completed'),
-        ('Evaluated', 'Evaluated')
-    )
-    status = models.CharField(
-        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
+class ListeningAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         ListeningModule, help_text='Select parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
-    evaluation = models.JSONField(
-        null=True, blank=True, help_text='Evaluation of the attempt')
-    
-
-    def __str__(self):
-        return f'{self.user.email} - {self.slug}'
+    correct_answers = models.PositiveIntegerField(default=0)
+    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if self.status == "Completed":
-            check_listening_answers(self)
+            attempt = check_answers(self)
+            attempt.bands = get_listening_ielts_score(
+                attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
+            return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
 
+
+class ReadingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'ReadingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if self.status == "Completed":
+            attempt = check_answers(self)
+            if attempt.module.test_type == 'academic':
+                attempt.bands = get_reading_academic_ielts_score(
+                    attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
+            else:
+                attempt.bands = get_reading_general_ielts_score(
+                    attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
+            return super(ReadingAttempt, attempt).save(*args, **kwargs)
+        return super(ReadingAttempt, self).save(*args, **kwargs)
+
+
+class ReadingModule(IndividualModuleAbstract):
+
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    def save(self, *args, **kwargs):
+        update_form_fields_with_ids(self)
+        super(ReadingModule, self).save(*args, **kwargs)
+
+    @property
+    def sections(self):
+        return ReadingSection.objects.filter(reading_module=self).order_by('section')
+
+
+class ReadingSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+    reading_module = models.ForeignKey(
+        ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
+    passage = RichTextUploadingField(
+        help_text='Add passage for this section')
+    questions = RichTextUploadingField(
+        help_text='Add questions with form elements and correct ids')
+    answers = models.JSONField(
+        help_text='Add answers for the questions above', default=get_listening_answer_default)
+
+    def __str__(self):
+        return self.name
+
+
+class WritingModule(IndividualModuleAbstract):
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    @property
+    def sections(self):
+        return WritingSection.objects.filter(writing_module=self).order_by('section')
+
+
+
+
+class WritingSection(IndividualModuleSectionAbstract):
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+    writing_module = models.ForeignKey(
+        WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+
+    def __str__(self):
+        return self.name
+
+
+class WritingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        return super(WritingModule, self).save(*args, **kwargs)
+
+# Speaking Module
+# Speaking Section
+# Speaking Attempt
 
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
     sections = module.sections
     counter = 0
+    processed_radio_names = {}
     for section in sections:
         if section.questions:
             soup = BeautifulSoup(section.questions, 'html.parser')
             form_elements = soup.find_all(['input', 'textarea', 'select'])
             local_counter = 0
             for element in form_elements:
+                if element.name == 'input' and element.get('type') == 'radio':
+                    radio_name = element['name']
+                    print(f'RADIO: {radio_name}')
+                    if processed_radio_names.get(radio_name):
+                        element['name'] = f'que-{processed_radio_names.get(radio_name)}'
+                        element['required'] = f'false'
+                    else:
+                        counter = counter + 1
+                        processed_radio_names[radio_name] = counter
+                        element['name'] = f'que-{counter}'
+                        element['required'] = f'false'
+
+                else:
+                    counter = counter+1
+                    local_counter = local_counter + 1
+                    # element['id'] = f'que-{counter}'
+                    element['name'] = f'que-{counter}'
+                    element['required'] = f'false'
                 print(element)
-                counter = counter+1
-                local_counter = local_counter + 1
-                element['id'] = f'que-{counter}'
-                element['name'] = f'que-{counter}'
-                element['required'] = f'false'
             section.total_questions = local_counter
             section.questions = str(soup)
             section.save()
+
     if module.total_questions is not counter:
         module.total_questions = counter
         module.save()
 
 
-def check_listening_answers(attempt):
+def check_answers(attempt):
+    complete_evaluation = {}
     evaluation = {}
+    sections = []
     counter = 0
     correct_answers_count = 0
     incorrect_answers_count = 0
+    best_scored_section = ('', 0)
+    worst_scored_section = ('', float('inf'))
+
     for section in attempt.module.sections:
         answers = section.answers
+        section_evaluation = {}
+        section_correct = 0
+        section_incorrect = 0
         for answer in answers:
             _evaluation = {}
             counter = counter + 1
@@ -207,16 +338,119 @@ def check_listening_answers(attempt):
             user_answer = str(attempt.answers.get(
                 f"que-{counter}"))
             is_user_answer_correct = False
-            print(f'USER: {user_answer}')
             if any(s.lower() == user_answer.lower() for s in correct_answer):
                 is_user_answer_correct = True
                 correct_answers_count = correct_answers_count + 1
+                section_correct = section_correct + 1
             else:
                 incorrect_answers_count = incorrect_answers_count + 1
+                section_incorrect = section_incorrect + 1
 
             _evaluation['correct_answer'] = correct_answer
             _evaluation['user_answer'] = user_answer
             _evaluation['is_user_answer_correct'] = is_user_answer_correct
             evaluation[f'que-{counter}'] = _evaluation
+            section_evaluation[f'que-{counter}'] = _evaluation
 
-    print(f'{evaluation}\nCorrect: {correct_answers_count}\nIncorrect: {incorrect_answers_count}')
+        section_evaluation['correct'] = section_correct
+        section_evaluation['incorrect'] = section_incorrect
+        section_evaluation['total_questions'] = section_correct + \
+            section_incorrect
+        section_evaluation['question_type'] = section.question_type.name
+        sections.append(section_evaluation)
+
+        # Update best and worst scored sections if needed
+        if section_correct > best_scored_section[1]:
+            best_scored_section = (section.section, section_correct)
+        if section_correct < worst_scored_section[1]:
+            worst_scored_section = (section.section, section_correct)
+
+    complete_evaluation['all_questions'] = evaluation
+    complete_evaluation['all_sections'] = sections
+
+    # Add the best and worst scored sections to the evaluation
+    complete_evaluation['best_scored_section'] = best_scored_section
+    complete_evaluation['worst_scored_section'] = worst_scored_section
+
+    # Assignments
+    timetaken = round(
+        (timezone.now() - attempt.created_at).total_seconds() / 60)
+    attempt.evaluation = complete_evaluation
+    attempt.correct_answers = correct_answers_count
+    attempt.incorrect_answers = incorrect_answers_count
+    attempt.status = "Evaluated"
+
+    attempt.time_taken = timetaken
+    return attempt
+
+
+def get_listening_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        39: 9,
+        37: 8.5,
+        35: 8,
+        32: 7.5,
+        30: 7,
+        26: 6.5,
+        23: 6,
+        18: 5.5,
+        16: 5,
+        13: 4.5,
+        10: 4,
+        0: 0,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
+
+
+def get_reading_academic_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        39: 9,
+        37: 8.5,
+        35: 8,
+        33: 7.5,
+        30: 7,
+        27: 6.5,
+        23: 6,
+        19: 5.5,
+        15: 5,
+        13: 4.5,
+        10: 4,
+        0: 0,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
+
+
+def get_reading_general_ielts_score(correct, total=40):
+    score = int((correct/total)*40)
+    score_map = {
+        40: 9,
+        39: 8.5,
+        37: 8,
+        36: 7.5,
+        34: 7,
+        32: 6.5,
+        30: 6,
+        27: 5.5,
+        23: 5,
+        19: 4.5,
+        15: 4,
+        0: 0,
+    }
+
+    for map in score_map:
+        if score >= map:
+            return score_map[map]
+
+    return 0.0
