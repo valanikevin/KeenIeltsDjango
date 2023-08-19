@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from ieltstest.variables import get_individual_test_obj_serializer_from_slug
+from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from ieltstest.serializers.listening_serializers import ListeningTestHomeSerializer
+from ieltstest.serializers import BookModuleSerializer
 from ieltstest.models import Book
 from rest_framework.permissions import IsAuthenticated
 import json
@@ -20,23 +20,30 @@ def get_books():
 @api_view(['GET'])
 def module_home(request, slug):
     books = get_books()
-
-    serializer = ListeningTestHomeSerializer(
-        {'books': books}, context={'request': request})
+    serializer = BookModuleSerializer(
+        books, context={'module_slug': slug, 'user': request.user}, many=True)
     return Response(serializer.data)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def find_smart_test_from_book(request, module_type, book_slug):
-    IndividualModule, IndividualModuleSerializer, IndividualModuleAttempt = get_individual_test_obj_serializer_from_slug(
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+        module_type)
+
+    IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
 
     modules = IndividualModule.objects.filter(
         test__book__slug=book_slug)
 
-    # TODO: Filter test for user which he has never made attempt before.
-    selected_module = modules.order_by('?')
+    specific_test = request.POST.get('specific_test')
+
+    if specific_test:
+        selected_module = modules.filter(test__slug=specific_test)
+    else:
+        # TODO: Filter test for user which he has never made attempt before.
+        selected_module = modules.order_by('?')
 
     if selected_module.exists():
         selected_module = selected_module.first()
@@ -50,7 +57,7 @@ def find_smart_test_from_book(request, module_type, book_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_module(request, module_type, module_slug):
-    IndividualModule, IndividualModuleSerializer, IndividualModuleAttempt = get_individual_test_obj_serializer_from_slug(
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
     module = IndividualModule.objects.get(slug=module_slug)
     serializer = IndividualModuleSerializer(module, many=False)
@@ -60,7 +67,9 @@ def get_module(request, module_type, module_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_attempt(request, module_type, attempt_slug):
-    IndividualModule, IndividualModuleSerializer, IndividualModuleAttempt = get_individual_test_obj_serializer_from_slug(
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+        module_type)
+    IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
     attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
     body_unicode = request.body.decode('utf-8')
@@ -73,4 +82,18 @@ def update_attempt(request, module_type, attempt_slug):
     attempt.status = attempt_type
     attempt.save()
 
-    return Response(body)
+    data = {
+        'status': attempt.status,
+    }
+
+    return Response(data=data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_attempt(request, module_type, attempt_slug):
+    IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+        module_type)
+    attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
+    serializer = IndividualModuleAttemptSerializer(attempt,  many=False)
+    return Response(serializer.data)
