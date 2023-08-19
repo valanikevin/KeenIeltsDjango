@@ -127,6 +127,16 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
         return tests
 
+    def tests_with_writing_module(self, user):
+        student_type = user.student.type if user.id else None
+        if student_type:
+            tests = self.tests.filter(
+                writingmodule__test__isnull=False, writingmodule__test_type=student_type)
+        else:
+            tests = self.tests.filter(writingmodule__test__isnull=False)
+
+        return tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -261,7 +271,7 @@ class WritingSection(IndividualModuleSectionAbstract):
         WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
     questions = RichTextUploadingField(
         help_text='Add questions with images for writing module')
-    
+
     def __str__(self):
         return self.name
 
