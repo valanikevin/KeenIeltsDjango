@@ -269,8 +269,10 @@ class WritingSection(IndividualModuleSectionAbstract):
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     writing_module = models.ForeignKey(
         WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+    task = RichTextUploadingField(
+        help_text='Add task 1/2 with images for writing module')
     questions = RichTextUploadingField(
-        help_text='Add questions with images for writing module')
+        help_text='Add questions/text area for user to write answer')
 
     def __str__(self):
         return self.name
@@ -281,7 +283,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        return super(WritingModule, self).save(*args, **kwargs)
+        return super(WritingAttempt, self).save(*args, **kwargs)
 
 # Speaking Module
 # Speaking Section
