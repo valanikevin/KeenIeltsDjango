@@ -20,7 +20,7 @@ class WritingSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WritingSection
-        exclude = ['answers']
+        fields = '__all__'
 
 
 class BookSerializerBasic(serializers.ModelSerializer):
