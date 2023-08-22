@@ -291,7 +291,11 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
     incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
+        if self.status == "Completed":
+            attempt = evaluate_writing_attempt(self)
+            return super(WritingAttempt, attempt).save(*args, **kwargs)
         return super(WritingAttempt, self).save(*args, **kwargs)
+
 
 # Speaking Module
 # Speaking Section
@@ -475,3 +479,7 @@ def get_reading_general_ielts_score(correct, total=40):
             return score_map[map]
 
     return 0.0
+
+
+def evaluate_writing_attempt(attempt):
+    pass
