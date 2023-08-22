@@ -211,6 +211,10 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
 class ReadingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'ReadingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+    correct_answers = models.PositiveIntegerField(default=0)
+    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if self.status == "Completed":
@@ -281,6 +285,10 @@ class WritingSection(IndividualModuleSectionAbstract):
 class WritingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+    correct_answers = models.PositiveIntegerField(default=0)
+    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         return super(WritingAttempt, self).save(*args, **kwargs)
