@@ -6,6 +6,9 @@ from ieltstest.serializers import BookModuleSerializer
 from ieltstest.models import Book, WritingAttempt
 from rest_framework.permissions import IsAuthenticated
 import json
+import openai
+from django.conf import settings
+from ieltstest.openai import writing_prompts
 
 
 def ieltstest(request):
@@ -103,17 +106,50 @@ def get_attempt(request, module_type, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_writing_bands(request, attempt_slug):
-    pass
+    attempt = WritingAttempt.objects.get(slug=attempt_slug)
+    if attempt.openai_bands:
+        return Response(attempt.evaluation.bands)
+    else:
+        return Response(openai_get_writing_bands(attempt))
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_writing_evaluation(request, attempt_slug):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
-    
+    if attempt.openai_evaluation:
+        return Response(attempt.evaluation.detailed_evaluation)
+    else:
+        return Response(openai_get_writing_evaluation(attempt))
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def get_writing_evaluation(request, attempt_slug):
+def openai_get_writing_bands(attempt):
+    openai.api_key = settings.OPENAI_SECRET
+    user_answers = attempt.answers
+    evaluation = {}
+
+    for answer in user_answers:
+        section = attempt.module.sections.filter(id=int(answer)).first()
+        task = section.task
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {"role": "user", "content": writing_prompts.PROMPT0},
+                {"role": "user", "content": writing_prompts.PROMPT1},
+                {"role": "user", "content": f'TASK: {task}'},
+                {"role": "user",
+                    "content": f'User Answer: {user_answers[answer]}'},
+                {"role": "user", "content": writing_prompts.PROMPT2},
+                {"role": "user", "content": writing_prompts.PROMPT3},
+                {"role": "user", "content": writing_prompts.PROMPT4},
+            ]
+        )
+        content = completion.choices[0].message['content']
+        print(content)
+        evaluation[answer] = content
+    attempt.evaluation = evaluation
+    return attempt
+
+
+def openai_get_writing_evaluation(attempt):
     pass
