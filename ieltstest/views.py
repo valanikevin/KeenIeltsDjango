@@ -134,18 +134,18 @@ def openai_get_writing_bands(attempt):
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "user", "content": writing_prompts.PROMPT0},
-                {"role": "user", "content": writing_prompts.PROMPT1},
-                {"role": "user", "content": f'TASK: {task}'},
+                {"role": "system", "content": writing_prompts.PROMPT0},
+                {"role": "system", "content": writing_prompts.PROMPT1},
+                {"role": "system", "content": f'TASK: {task}'},
                 {"role": "user",
                     "content": f'User Answer: {user_answers[answer]}'},
-                {"role": "user", "content": writing_prompts.PROMPT2},
-                {"role": "user", "content": writing_prompts.PROMPT3},
-                {"role": "user", "content": writing_prompts.PROMPT4},
+                {"role": "system", "content": writing_prompts.PROMPT2},
+                {"role": "system", "content": writing_prompts.PROMPT3},
+                {"role": "system", "content": writing_prompts.PROMPT4},
             ]
         )
         content = completion.choices[0].message['content']
-        print(content)
+  
         evaluation[answer] = content
     attempt.evaluation = evaluation
     return attempt
