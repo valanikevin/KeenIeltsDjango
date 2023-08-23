@@ -3,7 +3,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book
+from ieltstest.models import Book, WritingAttempt
 from rest_framework.permissions import IsAuthenticated
 import json
 
@@ -98,3 +98,22 @@ def get_attempt(request, module_type, attempt_slug):
     attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
     serializer = IndividualModuleAttemptSerializer(attempt,  many=False)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_writing_bands(request, attempt_slug):
+    pass
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_writing_evaluation(request, attempt_slug):
+    attempt = WritingAttempt.objects.get(slug=attempt_slug)
+    
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_writing_evaluation(request, attempt_slug):
+    pass
