@@ -289,8 +289,6 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
-    correct_answers = models.PositiveIntegerField(default=0)
-    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         attempt = evaluate_writing_attempt(self)
