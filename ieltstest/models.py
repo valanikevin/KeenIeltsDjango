@@ -6,6 +6,8 @@ from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
+import openai
+from ieltstest.openai import writing_prompts
 
 STATUS = (
     ('draft', 'Draft'),
@@ -291,8 +293,8 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
     incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
+        attempt = evaluate_writing_attempt(self)
         if self.status == "Completed":
-            attempt = evaluate_writing_attempt(self)
             return super(WritingAttempt, attempt).save(*args, **kwargs)
         return super(WritingAttempt, self).save(*args, **kwargs)
 
@@ -482,4 +484,29 @@ def get_reading_general_ielts_score(correct, total=40):
 
 
 def evaluate_writing_attempt(attempt):
-    pass
+    openai.api_key = settings.OPENAI_SECRET
+    prompt = "Please evaluate the following Writing Attempt"
+    user_answers = attempt.answers
+    evaluation = {}
+
+    for answer in user_answers:
+        section = attempt.module.sections.filter(id=int(answer)).first()
+        task = section.task
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {"role": "user", "content": writing_prompts.PROMPT0},
+                {"role": "user", "content": writing_prompts.PROMPT1},
+                {"role": "user", "content": f'TASK: {task}'},
+                {"role": "user",
+                    "content": f'User Answer: {user_answers[answer]}'},
+                {"role": "user", "content": writing_prompts.PROMPT2},
+                {"role": "user", "content": writing_prompts.PROMPT3},
+                {"role": "user", "content": writing_prompts.PROMPT4},
+            ]
+        )
+        content = completion.choices[0].message['content']
+        print(content)
+        evaluation[answer] = content
+    attempt.evaluation = evaluation
+    return attempt
