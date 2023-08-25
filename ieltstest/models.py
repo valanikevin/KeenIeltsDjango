@@ -271,6 +271,12 @@ class WritingModule(IndividualModuleAbstract):
 
 
 class WritingSection(IndividualModuleSectionAbstract):
+    SECTION = (
+        ('Task 1', 'Task 1'),
+        ('Task 2', 'Task 2'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     writing_module = models.ForeignKey(
@@ -291,8 +297,6 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation_bands = models.JSONField(
         null=True, blank=True, help_text='Bands for this attempt')
-    openai_bands = models.BooleanField(default=False)
-    openai_evaluation = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         return super(WritingAttempt, self).save(*args, **kwargs)

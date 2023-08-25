@@ -153,7 +153,7 @@ def openai_get_writing_bands(attempt):
         )
         content = completion.choices[0].message['content']
         content = eval(content)
-        content['section'] = section.id
+        content['section'] = section.section
         bands.append(content)
 
     attempt.evaluation_bands = bands
@@ -185,7 +185,7 @@ def openai_get_writing_evaluation(attempt):
         content = completion.choices[0].message['content']
         print(content)
         content = eval(content)
-        content['section'] = section.id
+        content['section'] = section.section
         evaluation.append(content)
 
     attempt.evaluation = evaluation
