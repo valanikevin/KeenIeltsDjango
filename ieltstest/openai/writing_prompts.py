@@ -2,17 +2,17 @@ PROMPT0 = """
 Assume the role of an IELTS examiner and assess my IELTS writing task using the guidelines detailed below.:
 """
 
-PROMPT1 = """
+# PROMPT1 = """
 
-IELTS Writing Task Evaluation Guidelines:
-- COHERENCE AND COHESION: Provide a score out of 9 bands.
-- LEXICAL RESOURCE: Evaluate with a score out of 9 bands.
-- GRAMMATICAL RANGE: Assign a score out of 9 bands.
-- TASK ACHIEVEMENT: Rate this category with a score out of 9 bands.
-- improved_answer: Rewrite my entire response (about 150 words for Task 1 and 250 words for Task 2), making improvements. Feel free to use HTML bootstrap tags to highlight changes visually. For example, if you discover a grammatical error, mark it with a <span> tag and use specific colors to indicate the correction.
-- what_improvements_did_you_made: Explain in 20-50 words the changes you made and why they were necessary.
+# IELTS Writing Task Evaluation Guidelines:
+# - COHERENCE AND COHESION: Provide a score out of 9 bands.
+# - LEXICAL RESOURCE: Evaluate with a score out of 9 bands.
+# - GRAMMATICAL RANGE: Assign a score out of 9 bands.
+# - TASK ACHIEVEMENT: Rate this category with a score out of 9 bands.
+# - improved_answer: Rewrite my entire response (about 150 words for Task 1 and 250 words for Task 2), making improvements. Feel free to use HTML bootstrap tags to highlight changes visually. For example, if you discover a grammatical error, mark it with a <span> tag and use specific colors to indicate the correction.
+# - what_improvements_did_you_made: Explain in 20-50 words the changes you made and why they were necessary.
 
-"""
+# """
 
 PROMPT2 = """
 Your must provide your entire response in the following python dictionary format only, please replace x.x bands with the evaluation bands:
@@ -44,8 +44,6 @@ Response Template:
         'relevant_specific_examples': 'x.x bands',
         'appropriate_word_count': 'x.x bands'
     },
-    'improved_answer': 'write an improved answer with html tags. Using HTML tags, highlight few words/voculabury or sentences that you have improved from my original answer. E.g. <span className="text-success">word or sentence</span>. About 150 words for Task 1 and 250 words for Task 2 required',
-    'what_improvements_did_you_made': 'please write down in brief about what improvements did you made as compared to my original answer',
 }
 
 

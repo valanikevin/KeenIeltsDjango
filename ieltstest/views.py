@@ -9,6 +9,7 @@ import json
 import openai
 from django.conf import settings
 from ieltstest.openai import writing_prompts
+from django.core import serializers
 
 
 def ieltstest(request):
@@ -107,35 +108,41 @@ def get_attempt(request, module_type, attempt_slug):
 @permission_classes([IsAuthenticated])
 def get_writing_bands(request, attempt_slug):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
-    if attempt.openai_bands:
-        return Response(attempt.evaluation.bands)
+
+    if attempt.evaluation_bands:
+        return Response(attempt.evaluation_bands)
     else:
-        return Response(openai_get_writing_bands(attempt))
+        attempt = openai_get_writing_bands(attempt)
+        print(attempt)
+        return Response(attempt.evaluation_bands)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_writing_evaluation(request, attempt_slug):
-    attempt = WritingAttempt.objects.get(slug=attempt_slug)
-    if attempt.openai_evaluation:
-        return Response(attempt.evaluation.detailed_evaluation)
-    else:
-        return Response(openai_get_writing_evaluation(attempt))
+    pass
+    # attempt = WritingAttempt.objects.get(slug=attempt_slug)
+    # if attempt.openai_evaluation:
+    #     return Response(attempt.evaluation.detailed_evaluation)
+    # else:
+    #     attempt = openai_get_writing_evaluation(attempt)
+    #     print(attempt)
+    #     return Response(attempt)
 
 
 def openai_get_writing_bands(attempt):
     openai.api_key = settings.OPENAI_SECRET
     user_answers = attempt.answers
-    evaluation = {}
+
+    bands = []
 
     for answer in user_answers:
         section = attempt.module.sections.filter(id=int(answer)).first()
         task = section.task
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": writing_prompts.PROMPT0},
-                {"role": "system", "content": writing_prompts.PROMPT1},
                 {"role": "system", "content": f'TASK: {task}'},
                 {"role": "user",
                     "content": f'User Answer: {user_answers[answer]}'},
@@ -145,9 +152,12 @@ def openai_get_writing_bands(attempt):
             ]
         )
         content = completion.choices[0].message['content']
-  
-        evaluation[answer] = content
-    attempt.evaluation = evaluation
+        content = eval(content)
+        content['section'] = section.id
+        bands.append(content)
+
+    attempt.evaluation_bands = bands
+    attempt.save()
     return attempt
 
 
