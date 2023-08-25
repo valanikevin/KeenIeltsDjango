@@ -279,7 +279,7 @@ class WritingSection(IndividualModuleSectionAbstract):
         help_text='Add task 1/2 with images for writing module')
     questions = RichTextUploadingField(
         help_text='Add questions/text area for user to write answer')
-
+    
     def __str__(self):
         return self.name
 
@@ -289,6 +289,8 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
+    evaluation_bands = models.JSONField(
+        null=True, blank=True, help_text='Bands for this attempt')
     openai_bands = models.BooleanField(default=False)
     openai_evaluation = models.BooleanField(default=False)
 
