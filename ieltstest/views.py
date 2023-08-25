@@ -120,14 +120,14 @@ def get_writing_bands(request, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_writing_evaluation(request, attempt_slug):
-    pass
-    # attempt = WritingAttempt.objects.get(slug=attempt_slug)
-    # if attempt.openai_evaluation:
-    #     return Response(attempt.evaluation.detailed_evaluation)
-    # else:
-    #     attempt = openai_get_writing_evaluation(attempt)
-    #     print(attempt)
-    #     return Response(attempt)
+    attempt = WritingAttempt.objects.get(slug=attempt_slug)
+
+    if attempt.evaluation:
+        return Response(attempt.evaluation)
+    else:
+        attempt = openai_get_writing_evaluation(attempt)
+        print(attempt)
+        return Response(attempt.evaluation)
 
 
 def openai_get_writing_bands(attempt):
@@ -162,4 +162,32 @@ def openai_get_writing_bands(attempt):
 
 
 def openai_get_writing_evaluation(attempt):
-    pass
+    openai.api_key = settings.OPENAI_SECRET
+    user_answers = attempt.answers
+
+    evaluation = []
+
+    for answer in user_answers:
+        section = attempt.module.sections.filter(id=int(answer)).first()
+        task = section.task
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k-0613",
+            messages=[
+                {"role": "system", "content": writing_prompts.PROMPT0},
+                {"role": "system", "content": f'TASK: {task}'},
+                {"role": "user",
+                    "content": f'User Answer: {user_answers[answer]}'},
+                {"role": "system", "content": writing_prompts.PROMPT5},
+                {"role": "system", "content": writing_prompts.PROMPT3},
+                {"role": "system", "content": writing_prompts.PROMPT6},
+            ]
+        )
+        content = completion.choices[0].message['content']
+        print(content)
+        content = eval(content)
+        content['section'] = section.id
+        evaluation.append(content)
+
+    attempt.evaluation = evaluation
+    attempt.save()
+    return attempt

@@ -56,3 +56,18 @@ Your response must be structured in a complete dictionary format, beginning with
 PROMPT4 = """
 Please be little bit hard marker so that I do not overestimate myself
 """
+
+PROMPT5 = """
+Your must provide your entire response in the following python dictionary format only, please replace x.x bands with the evaluation bands:
+Response Template:
+
+{
+    'improved_answer': 'Please completely rewrite my original answer ensuring that you meet task word count. The goal of this improved answer is to help me identify potential improvements in vocabulary and other IELTS criteria.',
+    'what_improvements_did_you_made': 'Briefly let me know what improvements did you made as compared to my original answer',
+}
+
+"""
+
+PROMPT6 = """
+Please use HTML tags such as <p>, <span>, etc for improved_answer, and what_improvements_did_you_made
+"""
