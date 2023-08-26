@@ -285,7 +285,7 @@ class WritingSection(IndividualModuleSectionAbstract):
         help_text='Add task 1/2 with images for writing module')
     questions = RichTextUploadingField(
         help_text='Add questions/text area for user to write answer')
-    
+
     def __str__(self):
         return self.name
 
@@ -295,12 +295,38 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
-    evaluation_bands = models.JSONField(
+    evaluation = models.TextField(
+        null=True, blank=True, help_text='Evaluation for this attempt')
+    evaluation_bands = models.TextField(
         null=True, blank=True, help_text='Bands for this attempt')
 
     def save(self, *args, **kwargs):
         return super(WritingAttempt, self).save(*args, **kwargs)
 
+    @property
+    def evaluation_json(self):
+        evaluation = eval(self.evaluation)
+        json_evaluation = {}
+        for section in evaluation:
+            content = evaluation[section]
+            improved_answer = extract_between(
+                content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
+            improvements_made = extract_between(
+                content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
+
+            improved_answer = process_writing_content(improved_answer)
+            improvements_made = process_writing_content(improvements_made)
+
+            json_evaluation[section] = {
+                'improved_answer': improved_answer, 'improvements_made': improvements_made}
+
+        return json_evaluation
+
+    @property
+    def evaluation_bands_json(self):
+        content = eval(self.evaluation_bands)
+
+        return content
 
 # Speaking Module
 # Speaking Section
@@ -484,3 +510,19 @@ def get_reading_general_ielts_score(correct, total=40):
             return score_map[map]
 
     return 0.0
+
+
+def extract_between(text, start, end):
+    import re
+    pattern = f"{re.escape(start)}(.*?){re.escape(end)}"
+    matches = re.search(pattern, text, re.DOTALL)
+
+    if matches:
+        return matches.group(1)
+    else:
+        return None
+
+
+def process_writing_content(text):
+    text = text.replace('\n', '</br>')
+    return text
