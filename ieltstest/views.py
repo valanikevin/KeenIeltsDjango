@@ -6,6 +6,7 @@ from ieltstest.serializers import BookModuleSerializer
 from ieltstest.models import Book, WritingAttempt
 from rest_framework.permissions import IsAuthenticated
 import json
+import re
 import openai
 from django.conf import settings
 from ieltstest.openai import writing_prompts
@@ -110,7 +111,7 @@ def get_writing_bands(request, attempt_slug):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
 
     if attempt.evaluation_bands:
-        return Response(attempt.evaluation_bands)
+        return Response(attempt.evaluation_bands_json)
     else:
         attempt = openai_get_writing_bands(attempt)
         print(attempt)
@@ -123,7 +124,7 @@ def get_writing_evaluation(request, attempt_slug):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
 
     if attempt.evaluation:
-        return Response(attempt.evaluation)
+        return Response(attempt.evaluation_json)
     else:
         attempt = openai_get_writing_evaluation(attempt)
         print(attempt)
@@ -134,7 +135,7 @@ def openai_get_writing_bands(attempt):
     openai.api_key = settings.OPENAI_SECRET
     user_answers = attempt.answers
 
-    bands = []
+    bands = {}
 
     for answer in user_answers:
         section = attempt.module.sections.filter(id=int(answer)).first()
@@ -151,10 +152,9 @@ def openai_get_writing_bands(attempt):
                 {"role": "system", "content": writing_prompts.PROMPT4},
             ]
         )
-        content = completion.choices[0].message['content']
-        content = eval(content)
-        content['section'] = section.section
-        bands.append(content)
+        content = sanitize_json_string(
+            str(completion.choices[0].message["content"]))
+        bands[section.id] = content
 
     attempt.evaluation_bands = bands
     attempt.save()
@@ -165,7 +165,7 @@ def openai_get_writing_evaluation(attempt):
     openai.api_key = settings.OPENAI_SECRET
     user_answers = attempt.answers
 
-    evaluation = []
+    evaluation = {}
 
     for answer in user_answers:
         section = attempt.module.sections.filter(id=int(answer)).first()
@@ -173,21 +173,22 @@ def openai_get_writing_evaluation(attempt):
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k-0613",
             messages=[
-                {"role": "system", "content": writing_prompts.PROMPT0},
-                {"role": "system", "content": f'TASK: {task}'},
+                {"role": "user", "content": writing_prompts.PROMPT0},
+                {"role": "user", "content": f'TASK: {task}'},
                 {"role": "user",
-                    "content": f'User Answer: {user_answers[answer]}'},
-                {"role": "system", "content": writing_prompts.PROMPT5},
-                {"role": "system", "content": writing_prompts.PROMPT3},
-                {"role": "system", "content": writing_prompts.PROMPT6},
+                    "content": f'My Answer: {user_answers[answer]}'},
+                {"role": "user", "content": writing_prompts.PROMPT71},
+                {"role": "user", "content": writing_prompts.PROMPT8},
             ]
         )
-        content = completion.choices[0].message['content']
-        print(content)
-        content = eval(content)
-        content['section'] = section.section
-        evaluation.append(content)
-
+        content = completion.choices[0].message["content"]
+        evaluation[section.id] = content
     attempt.evaluation = evaluation
     attempt.save()
     return attempt
+
+
+def sanitize_json_string(s):
+    s = s.replace("'", '"')  # Replace single quotes with double quotes
+    s = re.sub(r'\\(?![/uUnN"])', r'\\\\', s)  # Escape stray backslashes
+    return s
