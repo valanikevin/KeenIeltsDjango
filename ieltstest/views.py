@@ -126,7 +126,7 @@ def get_writing_evaluation(request, attempt_slug):
         return Response(attempt.evaluation_json)
     else:
         attempt = openai_get_writing_evaluation(attempt)
-        return Response(attempt.evaluation)
+        return Response(attempt.evaluation_json)
 
 
 def openai_get_writing_bands(attempt):
