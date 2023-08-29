@@ -114,8 +114,7 @@ def get_writing_bands(request, attempt_slug):
         return Response(attempt.evaluation_bands_json)
     else:
         attempt = openai_get_writing_bands(attempt)
-        print(attempt)
-        return Response(attempt.evaluation_bands)
+        return Response(attempt.evaluation_bands_json)
 
 
 @api_view(['POST'])
@@ -127,7 +126,6 @@ def get_writing_evaluation(request, attempt_slug):
         return Response(attempt.evaluation_json)
     else:
         attempt = openai_get_writing_evaluation(attempt)
-        print(attempt)
         return Response(attempt.evaluation)
 
 

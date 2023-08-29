@@ -307,6 +307,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
     def evaluation_json(self):
         evaluation = eval(self.evaluation)
         json_evaluation = {}
+
         for section in evaluation:
             content = evaluation[section]
             improved_answer = extract_between(
@@ -317,16 +318,20 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
             improved_answer = process_writing_content(improved_answer)
             improvements_made = process_writing_content(improvements_made)
 
-            json_evaluation[section] = {
+            json_evaluation[str(section)] = {
                 'improved_answer': improved_answer, 'improvements_made': improvements_made}
 
         return json_evaluation
 
     @property
     def evaluation_bands_json(self):
-        content = eval(self.evaluation_bands)
+        evaluation = eval(self.evaluation_bands)
+        json_evaluation = {}
 
-        return content
+        for section in evaluation:
+            content = evaluation[section]
+            json_evaluation[str(section)] = eval(content)
+        return json_evaluation
 
 # Speaking Module
 # Speaking Section
