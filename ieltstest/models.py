@@ -305,7 +305,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def evaluation_json(self):
-        evaluation = eval(self.evaluation)
+        evaluation = eval(str(self.evaluation))
         json_evaluation = {}
 
         for section in evaluation:
@@ -325,8 +325,8 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def evaluation_bands_json(self):
-        evaluation = eval(self.evaluation_bands)
         json_evaluation = {}
+        evaluation = eval(str(self.evaluation_bands))
 
         for section in evaluation:
             content = evaluation[section]
