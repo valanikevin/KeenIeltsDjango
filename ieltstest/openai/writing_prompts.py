@@ -18,7 +18,10 @@ PROMPT2 = """
 Your must provide your entire response in the following python dictionary format only, please replace x.x bands with the evaluation bands:
 Response Template:
 {
-    "overall_score": "x.x bands",
+    "overall_score": {
+        "bands": "x.x bands",
+        "description": "Describe what overall bands means in terms of their skill level in one sentence only.",
+    },
     "coherence": {
         "overall_coherence_bands": "x.x bands",
         "logical_structure": "x.x bands",
