@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection
 
 
 class ListeningSectionSerializer(serializers.ModelSerializer):
@@ -20,6 +20,13 @@ class WritingSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WritingSection
+        fields = '__all__'
+
+
+class SpeakingSectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SpeakingSection
         fields = '__all__'
 
 
@@ -135,6 +142,17 @@ class WritingAttemptSerializer(serializers.ModelSerializer):
         return BookBasicSerializer(instance.module.test.book, many=False).data
 
 
+class SpeakingAttemptSerializer(serializers.ModelSerializer):
+    book = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpeakingAttempt
+        fields = '__all__'
+
+    def get_book(self, instance):
+        return BookBasicSerializer(instance.module.test.book, many=False).data
+
+
 class ReadingModuleWithSectionSerializer(serializers.ModelSerializer):
     sections = ReadingSectionSerializer(many=True, read_only=True)
     test = TestWithBookSerializer(many=False, read_only=True)
@@ -150,4 +168,13 @@ class WritingModuleWithSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WritingModule
+        fields = '__all__'
+
+
+class SpeakingModuleWithSectionSerializer(serializers.ModelSerializer):
+    sections = SpeakingSectionSerializer(many=True, read_only=True)
+    test = TestWithBookSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = SpeakingModule
         fields = '__all__'
