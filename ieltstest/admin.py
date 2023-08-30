@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection
 
 # Inlines
 
@@ -43,6 +43,18 @@ class WritingModuleInline(admin.StackedInline):
 
 class WritingSectionInline(admin.StackedInline):
     model = WritingSection
+    show_change_link = True
+    extra = 1
+
+
+class SpeakingModuleInline(admin.StackedInline):
+    model = SpeakingModule
+    show_change_link = True
+    extra = 1
+
+
+class SpeakingSectionInline(admin.StackedInline):
+    model = SpeakingSection
     show_change_link = True
     extra = 1
 
@@ -93,6 +105,10 @@ class WritingModuleAdmin(ModuleAdmin):
     inlines = [WritingSectionInline]
 
 
+class SpeakingModuleAdmin(ModuleAdmin):
+    inlines = [SpeakingSectionInline]
+
+
 class ListeningAttemptAdmin(admin.ModelAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
 
@@ -102,6 +118,10 @@ class ReadingAttemptAdmin(admin.ModelAdmin):
 
 
 class WritingAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'slug', 'status', 'bands']
+
+
+class SpeakingAttemptAdmin(admin.ModelAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
 
 
@@ -123,3 +143,8 @@ admin.site.register(ReadingAttempt, ReadingAttemptAdmin)
 admin.site.register(WritingModule, WritingModuleAdmin)
 admin.site.register(WritingSection, SectionAdmin)
 admin.site.register(WritingAttempt, WritingAttemptAdmin)
+
+# Speaking
+admin.site.register(SpeakingModule, SpeakingModuleAdmin)
+admin.site.register(SpeakingSection, SectionAdmin)
+admin.site.register(SpeakingAttempt, SpeakingAttemptAdmin)

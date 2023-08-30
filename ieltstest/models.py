@@ -333,9 +333,40 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
             json_evaluation[str(section)] = eval(content)
         return json_evaluation
 
-# Speaking Module
-# Speaking Section
-# Speaking Attempt
+
+class SpeakingModule(IndividualModuleAbstract):
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    @property
+    def sections(self):
+        return SpeakingSection.objects.filter(speaking_module=self).order_by('section')
+
+
+class SpeakingSection(IndividualModuleSectionAbstract):
+    SECTION = (
+        ('Part 1', 'Part 1'),
+        ('Part 2', 'Part 2'),
+        ('Part 3', 'Part 3'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+    speaking_module = models.ForeignKey(
+        SpeakingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+
+    def __str__(self):
+        return self.name
+
+
+class SpeakingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        return super(SpeakingAttempt, self).save(*args, **kwargs)
+
 
 
 def update_form_fields_with_ids(module):
