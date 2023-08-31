@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection, SpeakingSectionQuestion
 
 # Inlines
 
@@ -58,6 +58,12 @@ class SpeakingSectionInline(admin.StackedInline):
     show_change_link = True
     extra = 1
 
+
+class SpeakingSectionQuestionInline(admin.StackedInline):
+    model = SpeakingSectionQuestion
+    show_change_link = True,
+    extra = 3
+
 # Admins
 
 
@@ -78,7 +84,6 @@ class ModuleAdmin(admin.ModelAdmin):
     search_fields = ['name']
     exclude = ['created_at', 'updated_at']
     list_display = ['name', 'slug']
-    readonly_fields = ['total_questions']
 
     class Meta:
         abstract = True
@@ -88,17 +93,22 @@ class SectionAdmin(admin.ModelAdmin):
     search_fields = ['test']
     exclude = ['created_at', 'updated_at', ]
     list_display = ['name']
-    readonly_fields = ['total_questions']
 
     class Meta:
         abstract = True
 
 
+class SpeakingSectionAdmin(SectionAdmin):
+    inlines = [SpeakingSectionQuestionInline, ]
+
+
 class ListeningModuleAdmin(ModuleAdmin):
+    readonly_fields = ['total_questions']
     inlines = [ListeningSectionInline]
 
 
 class ReadingModuleAdmin(ModuleAdmin):
+    readonly_fields = ['total_questions']
     inlines = [ReadingSectionInline]
 
 
@@ -147,5 +157,5 @@ admin.site.register(WritingAttempt, WritingAttemptAdmin)
 
 # Speaking
 admin.site.register(SpeakingModule, SpeakingModuleAdmin)
-admin.site.register(SpeakingSection, SectionAdmin)
+admin.site.register(SpeakingSection, SpeakingSectionAdmin)
 admin.site.register(SpeakingAttempt, SpeakingAttemptAdmin)
