@@ -14,4 +14,11 @@ urlpatterns = [
          tests_views.update_attempt, name='update_attempt'),
     path('get_attempt/<slug:module_type>/<slug:attempt_slug>/',
          tests_views.get_attempt, name='get_attempt'),
+
+    # Writing
+    path('get_writing_bands/<slug:attempt_slug>/',
+         tests_views.get_writing_bands, name='get_writing_bands'),
+    path('get_writing_evaluation/<slug:attempt_slug>/',
+         tests_views.get_writing_evaluation, name='get_writing_evaluation')
+
 ]

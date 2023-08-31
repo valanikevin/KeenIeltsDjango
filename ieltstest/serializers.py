@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion
+
+
+class SpeakingSectionQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpeakingSectionQuestion
+        fields = '__all__'
 
 
 class ListeningSectionSerializer(serializers.ModelSerializer):
@@ -14,6 +20,26 @@ class ReadingSectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReadingSection
         exclude = ['answers']
+
+
+class WritingSectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = WritingSection
+        fields = '__all__'
+
+
+class SpeakingSectionSerializer(serializers.ModelSerializer):
+    questions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpeakingSection
+        fields = '__all__'
+
+    def get_questions(self, obj):
+        serializer = SpeakingSectionQuestionSerializer(
+            obj.questions, many=True, read_only=True)
+        return serializer.data
 
 
 class BookSerializerBasic(serializers.ModelSerializer):
@@ -77,6 +103,10 @@ class BookModuleSerializer(serializers.ModelSerializer):
             tests = obj.tests_with_listening_module
         elif module_slug == 'reading':
             tests = obj.tests_with_reading_module(user)
+        elif module_slug == 'writing':
+            tests = obj.tests_with_writing_module(user)
+        elif module_slug == 'speaking':
+            tests = obj.tests_with_speaking_module
 
         serializer = TestSerializer(
             tests, many=True)
@@ -115,10 +145,50 @@ class ReadingAttemptSerializer(serializers.ModelSerializer):
         return BookBasicSerializer(instance.module.test.book, many=False).data
 
 
+class WritingAttemptSerializer(serializers.ModelSerializer):
+    book = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WritingAttempt
+        fields = '__all__'
+
+    def get_book(self, instance):
+        return BookBasicSerializer(instance.module.test.book, many=False).data
+
+
+class SpeakingAttemptSerializer(serializers.ModelSerializer):
+    book = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpeakingAttempt
+        fields = '__all__'
+
+    def get_book(self, instance):
+        return BookBasicSerializer(instance.module.test.book, many=False).data
+
+
 class ReadingModuleWithSectionSerializer(serializers.ModelSerializer):
     sections = ReadingSectionSerializer(many=True, read_only=True)
     test = TestWithBookSerializer(many=False, read_only=True)
 
     class Meta:
         model = ReadingModule
+        fields = '__all__'
+
+
+class WritingModuleWithSectionSerializer(serializers.ModelSerializer):
+    sections = WritingSectionSerializer(many=True, read_only=True)
+    test = TestWithBookSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = WritingModule
+        fields = '__all__'
+
+
+class SpeakingModuleWithSectionSerializer(serializers.ModelSerializer):
+    sections = SpeakingSectionSerializer(many=True, read_only=True)
+    test = TestWithBookSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = SpeakingModule
         fields = '__all__'

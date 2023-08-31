@@ -1,11 +1,13 @@
 from django.db import models
-from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel
+from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel, WeightedBaseModel
 from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
+
+from ieltstest.openai import writing_prompts
 
 STATUS = (
     ('draft', 'Draft'),
@@ -34,8 +36,6 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
         choices=STATUS, help_text='What is current status of this test?', max_length=200)
     name = models.CharField(
         max_length=200, help_text='e.g. Listening Test March 2023')
-    total_questions = models.PositiveIntegerField(
-        help_text='How many questions are there in this module?', default=0)
 
     class Meta:
         abstract = True
@@ -52,8 +52,6 @@ class IndividualModuleSectionAbstract(models.Model):
         choices=SECTION, help_text='What is section type?')
     name = models.CharField(
         max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
-    total_questions = models.PositiveIntegerField(
-        help_text='How many questions are there in this section?', default=0)
 
     class Meta:
         abstract = True
@@ -127,6 +125,21 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
         return tests
 
+    def tests_with_writing_module(self, user):
+        student_type = user.student.type if user.id else None
+        if student_type:
+            tests = self.tests.filter(
+                writingmodule__test__isnull=False, writingmodule__test_type=student_type)
+        else:
+            tests = self.tests.filter(writingmodule__test__isnull=False)
+
+        return tests
+
+    @property
+    def tests_with_speaking_module(self):
+        tests = self.tests.filter(speakingmodule__test__isnull=False)
+        return tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -145,6 +158,9 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningModule(IndividualModuleAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
+
     audio = models.FileField(
         help_text='Add Audio file, all section merged in one audio')
 
@@ -169,6 +185,8 @@ class QuestionType(models.Model):
 
 
 class ListeningSection(IndividualModuleSectionAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
@@ -201,6 +219,10 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
 class ReadingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'ReadingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+    correct_answers = models.PositiveIntegerField(default=0)
+    incorrect_answers = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if self.status == "Completed":
@@ -216,6 +238,8 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
 
 
 class ReadingModule(IndividualModuleAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
 
     def __str__(self):
         return self.test.name if self.test else ""
@@ -230,6 +254,8 @@ class ReadingModule(IndividualModuleAbstract):
 
 
 class ReadingSection(IndividualModuleSectionAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     reading_module = models.ForeignKey(
@@ -254,13 +280,21 @@ class WritingModule(IndividualModuleAbstract):
         return WritingSection.objects.filter(writing_module=self).order_by('section')
 
 
-
-
 class WritingSection(IndividualModuleSectionAbstract):
+    SECTION = (
+        ('Task 1', 'Task 1'),
+        ('Task 2', 'Task 2'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     writing_module = models.ForeignKey(
         WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+    task = RichTextUploadingField(
+        help_text='Add task 1/2 with images for writing module')
+    questions = RichTextUploadingField(
+        help_text='Add questions/text area for user to write answer')
 
     def __str__(self):
         return self.name
@@ -269,13 +303,96 @@ class WritingSection(IndividualModuleSectionAbstract):
 class WritingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'WritingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
+    evaluation = models.TextField(
+        null=True, blank=True, help_text='Evaluation for this attempt')
+    evaluation_bands = models.TextField(
+        null=True, blank=True, help_text='Bands for this attempt')
 
     def save(self, *args, **kwargs):
-        return super(WritingModule, self).save(*args, **kwargs)
+        return super(WritingAttempt, self).save(*args, **kwargs)
 
-# Speaking Module
-# Speaking Section
-# Speaking Attempt
+    @property
+    def evaluation_json(self):
+        evaluation = eval(str(self.evaluation))
+        json_evaluation = {}
+
+        for section in evaluation:
+            content = evaluation[section]
+            improved_answer = extract_between(
+                content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
+            improvements_made = extract_between(
+                content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
+
+            improved_answer = process_writing_content(improved_answer)
+            improvements_made = process_writing_content(improvements_made)
+
+            json_evaluation[str(section)] = {
+                'improved_answer': improved_answer, 'improvements_made': improvements_made}
+
+        return json_evaluation
+
+    @property
+    def evaluation_bands_json(self):
+        json_evaluation = {}
+        evaluation = eval(str(self.evaluation_bands))
+
+        for section in evaluation:
+            content = evaluation[section]
+            json_evaluation[str(section)] = eval(content)
+        return json_evaluation
+
+
+class SpeakingModule(IndividualModuleAbstract):
+    def __str__(self):
+        return self.test.name if self.test else ""
+
+    @property
+    def sections(self):
+        return SpeakingSection.objects.filter(speaking_module=self).order_by('section')
+
+
+class SpeakingSection(IndividualModuleSectionAbstract):
+    SECTION = (
+        ('Part 1', 'Part 1'),
+        ('Part 2', 'Part 2'),
+        ('Part 3', 'Part 3'),
+    )
+    section = models.CharField(
+        choices=SECTION, help_text='What is section type?')
+    question_type = models.ForeignKey(
+        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
+    speaking_module = models.ForeignKey(
+        SpeakingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def questions(self):
+        return SpeakingSectionQuestion.objects.filter(speaking_section=self).order_by('weight')
+
+
+class SpeakingSectionQuestion(WeightedBaseModel):
+    speaking_section = models.ForeignKey(
+        SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
+    question = models.CharField(
+        max_length=300, help_text='Add speaking section question.')
+    help_text = models.TextField(
+        help_text='Add helper text for this question', null=True, blank=True)
+
+    def __str__(self):
+        return self.question
+
+
+class SpeakingAttempt(IndividualModuleAttemptAbstract):
+    module = models.ForeignKey(
+        'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        return super(SpeakingAttempt, self).save(*args, **kwargs)
+
 
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
@@ -454,3 +571,19 @@ def get_reading_general_ielts_score(correct, total=40):
             return score_map[map]
 
     return 0.0
+
+
+def extract_between(text, start, end):
+    import re
+    pattern = f"{re.escape(start)}(.*?){re.escape(end)}"
+    matches = re.search(pattern, text, re.DOTALL)
+
+    if matches:
+        return matches.group(1)
+    else:
+        return None
+
+
+def process_writing_content(text):
+    text = text.replace('\n', '</br>')
+    return text
