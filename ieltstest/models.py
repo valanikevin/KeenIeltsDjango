@@ -1,5 +1,5 @@
 from django.db import models
-from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel
+from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel, WeightedBaseModel
 from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
@@ -369,8 +369,12 @@ class SpeakingSection(IndividualModuleSectionAbstract):
     def __str__(self):
         return self.name
 
+    @property
+    def questions(self):
+        return SpeakingSectionQuestion.objects.filter(speaking_section=self).order_by('weight')
 
-class SpeakingSectionQuestion(models.Model):
+
+class SpeakingSectionQuestion(WeightedBaseModel):
     speaking_section = models.ForeignKey(
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     question = models.CharField(
