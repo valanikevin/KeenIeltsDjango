@@ -365,6 +365,18 @@ class SpeakingSection(IndividualModuleSectionAbstract):
         return self.name
 
 
+class SpeakingSectionQuestion(models.Model):
+    speaking_section = models.ForeignKey(
+        SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
+    question = models.CharField(
+        max_length=300, help_text='Add speaking section question.')
+    help_text = models.TextField(
+        help_text='Add helper text for this question', null=True, blank=True)
+
+    def __str__(self):
+        return self.question
+
+
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
