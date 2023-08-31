@@ -93,6 +93,8 @@ class BookModuleSerializer(serializers.ModelSerializer):
             tests = obj.tests_with_reading_module(user)
         elif module_slug == 'writing':
             tests = obj.tests_with_writing_module(user)
+        elif module_slug == 'speaking':
+            tests = obj.tests_with_speaking_module
 
         serializer = TestSerializer(
             tests, many=True)

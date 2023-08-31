@@ -69,7 +69,8 @@ class BookAdmin(admin.ModelAdmin):
 
 class TestAdmin(admin.ModelAdmin):
     search_fields = ['name', 'id']
-    inlines = [ListeningModuleInline, ReadingModuleInline, WritingModuleInline]
+    inlines = [ListeningModuleInline, ReadingModuleInline,
+               WritingModuleInline, SpeakingModuleInline]
     exclude = ['created_at', 'updated_at']
 
 
