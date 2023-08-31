@@ -36,8 +36,6 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
         choices=STATUS, help_text='What is current status of this test?', max_length=200)
     name = models.CharField(
         max_length=200, help_text='e.g. Listening Test March 2023')
-    total_questions = models.PositiveIntegerField(
-        help_text='How many questions are there in this module?', default=0)
 
     class Meta:
         abstract = True
@@ -54,8 +52,6 @@ class IndividualModuleSectionAbstract(models.Model):
         choices=SECTION, help_text='What is section type?')
     name = models.CharField(
         max_length=200, help_text='Test ideentifier name. e.g. Art and Science')
-    total_questions = models.PositiveIntegerField(
-        help_text='How many questions are there in this section?', default=0)
 
     class Meta:
         abstract = True
@@ -162,6 +158,9 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
 
 
 class ListeningModule(IndividualModuleAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
+
     audio = models.FileField(
         help_text='Add Audio file, all section merged in one audio')
 
@@ -186,6 +185,8 @@ class QuestionType(models.Model):
 
 
 class ListeningSection(IndividualModuleSectionAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
@@ -237,6 +238,8 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
 
 
 class ReadingModule(IndividualModuleAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this module?', default=0)
 
     def __str__(self):
         return self.test.name if self.test else ""
@@ -251,6 +254,8 @@ class ReadingModule(IndividualModuleAbstract):
 
 
 class ReadingSection(IndividualModuleSectionAbstract):
+    total_questions = models.PositiveIntegerField(
+        help_text='How many questions are there in this section?', default=0)
     question_type = models.ForeignKey(
         QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     reading_module = models.ForeignKey(
