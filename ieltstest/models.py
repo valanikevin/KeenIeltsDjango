@@ -139,6 +139,11 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
         return tests
 
+    @property
+    def tests_with_speaking_module(self):
+        tests = self.tests.filter(speakingmodule__test__isnull=False)
+        return tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -366,7 +371,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     def save(self, *args, **kwargs):
         return super(SpeakingAttempt, self).save(*args, **kwargs)
-
 
 
 def update_form_fields_with_ids(module):
