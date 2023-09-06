@@ -389,9 +389,25 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    answers = models.JSONField(
+        null=True, blank=True, help_text='Answers that is attempted by user')
 
     def save(self, *args, **kwargs):
         return super(SpeakingAttempt, self).save(*args, **kwargs)
+
+
+class SpeakingAttemptAudio(models.Model):
+    attempt = models.ForeignKey(
+        SpeakingAttempt, help_text='Select attempt for this audio', on_delete=models.CASCADE)
+    section = models.ForeignKey(
+        SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
+    audio = models.FileField(
+        help_text='Add Audio file for the speaking attempt')
+    timestamps = models.JSONField(
+        null=True, help_text='Timestamps for each question in the audio', blank=True)
+
+    def __str__(self):
+        return self.attempt.slug
 
 
 def update_form_fields_with_ids(module):
