@@ -140,7 +140,9 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
         speaking_audio.audio.save(
             f'{section_id}.mp3', ContentFile(audio_blob.read()))
 
-        print(speaking_audio)
+    attempt_type = request.POST.get('attempt_type')
+    attempt.status = attempt_type
+    attempt.save()
 
     data = {
         'status': attempt.status,
