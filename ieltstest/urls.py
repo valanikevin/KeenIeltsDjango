@@ -10,6 +10,8 @@ urlpatterns = [
     # Attempts
     path('get_module/<slug:module_type>/<slug:module_slug>/',
          tests_views.get_module, name='get_module'),
+    path('update_attempt/speaking/<slug:attempt_slug>/',
+         tests_views.update_attempt_speaking, name='update_attempt_speaking'),
     path('update_attempt/<slug:module_type>/<slug:attempt_slug>/',
          tests_views.update_attempt, name='update_attempt'),
     path('get_attempt/<slug:module_type>/<slug:attempt_slug>/',

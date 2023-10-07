@@ -80,7 +80,6 @@ def update_attempt(request, module_type, attempt_slug):
     attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
     body_unicode = request.body.decode('utf-8')
     body = json.loads(body_unicode)
-
     answers = body.get('answers')
     attempt_type = body.get('attempt_type')
 
@@ -88,6 +87,26 @@ def update_attempt(request, module_type, attempt_slug):
     attempt.status = attempt_type
     attempt.save()
 
+    data = {
+        'status': attempt.status,
+    }
+
+    return Response(data=data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+        module_type)
+    IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+        module_type)
+    attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
+    audio_files = {key: request.FILES[key]
+                   for key in request.FILES if key.startswith('responses[')}
+
+    print(audio_files)
+    print(request.POST)
     data = {
         'status': attempt.status,
     }
