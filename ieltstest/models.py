@@ -391,34 +391,7 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
-    answers = models.JSONField(
-        null=True, blank=True, help_text='Answers that is attempted by user')
-
-    def save(self, *args, **kwargs):
-        if self.answers:
-            for section in self.answers:
-                section_id = int(section)
-                _section = SpeakingSection.objects.get(id=section_id)
-
-                # Fetch the audio file from the URL
-                audio_url = self.answers.get(section).get('audio')
-                if audio_url:
-                    response = requests.get(audio_url)
-                    audio_file = NamedTemporaryFile(delete=True)
-                    audio_file.write(response.content)
-                    audio_file.flush()
-
-                    # Change the file name format if you want
-                    audio_name = f"audio_{self.id}_{_section.id}.mp3"
-                    # Create or update the SpeakingAttemptAudio entry
-                    speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
-                        section=_section, attempt=self, defaults={
-                            'timestamps': self.answers.get(section),
-                        }
-                    )
-                    # Save the audio file
-                    speaking_audio.audio.save(audio_name, File(audio_file))
-        return super(SpeakingAttempt, self).save(*args, **kwargs)
+    
 
 
 class SpeakingAttemptAudio(models.Model):
