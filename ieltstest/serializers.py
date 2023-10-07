@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType
+
+
+class QuestionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionType
+        fields = '__all__'
 
 
 class SpeakingSectionQuestionSerializer(serializers.ModelSerializer):
@@ -31,6 +37,7 @@ class WritingSectionSerializer(serializers.ModelSerializer):
 
 class SpeakingSectionSerializer(serializers.ModelSerializer):
     questions = serializers.SerializerMethodField()
+    question_type = QuestionTypeSerializer(many=False, read_only=True)
 
     class Meta:
         model = SpeakingSection
