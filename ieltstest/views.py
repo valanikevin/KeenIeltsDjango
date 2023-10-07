@@ -3,7 +3,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book, WritingAttempt
+from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection
 from rest_framework.permissions import IsAuthenticated
 import json
 import re
@@ -11,6 +11,7 @@ import openai
 from django.conf import settings
 from ieltstest.openai import writing_prompts
 from django.core import serializers
+from django.core.files.base import ContentFile
 
 
 def ieltstest(request):
@@ -97,16 +98,50 @@ def update_attempt(request, module_type, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
+    # Get your models and serializers (this part is based on your existing code)
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
-    attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
-    audio_files = {key: request.FILES[key]
-                   for key in request.FILES if key.startswith('responses[')}
 
-    print(audio_files)
-    print(request.POST)
+    # Get the attempt object
+    attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
+
+    timestamps = {}
+
+    # Parsing other POST Data (excluding audio)
+    for key, value in request.POST.items():
+        if key != 'attempt_type':
+            main_key, nested_key = key.split(',')
+            main_key = int(main_key)
+            nested_key = int(nested_key)
+
+            nested_value = json.loads(value)
+
+            if main_key not in timestamps:
+                timestamps[main_key] = {}
+
+            timestamps[main_key][nested_key] = nested_value
+
+    # Loop through each file and save it
+    for section_id, audio_blob in request.FILES.items():
+        # I'm assuming section_id is the same as the 'key' you used in FormData
+        section = SpeakingSection.objects.get(id=int(section_id))
+
+        # Create or update the audio for this section
+        speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
+            section=section,
+            attempt=attempt,
+            # Update this as per your need
+            defaults={'timestamps': timestamps.get(int(section_id))}
+        )
+
+        # Save the audio blob as a file
+        speaking_audio.audio.save(
+            f'{section_id}.mp3', ContentFile(audio_blob.read()))
+
+        print(speaking_audio)
+
     data = {
         'status': attempt.status,
     }
