@@ -391,7 +391,6 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
-    
 
 
 class SpeakingAttemptAudio(models.Model):
