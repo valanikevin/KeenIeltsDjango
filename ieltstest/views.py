@@ -132,7 +132,6 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
         speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
             section=section,
             attempt=attempt,
-            # Update this as per your need
             defaults={'timestamps': timestamps.get(int(section_id))}
         )
 
