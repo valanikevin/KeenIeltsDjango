@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 from ieltstest.models import SpeakingAttemptAudio
-import speech_recognition as sr
-from pydub import AudioSegment
 import whisper
 
 
@@ -9,7 +7,6 @@ class Command(BaseCommand):
     help = 'Converts audio to text using speech recognition'
 
     def handle(self, *args, **kwargs):
-        recognizer = sr.Recognizer()
         speaking_audio = SpeakingAttemptAudio.objects.first()
         audio_path = speaking_audio.audio.path
         print(f'AUDIO: {audio_path}')
@@ -20,6 +17,6 @@ class Command(BaseCommand):
         # audio = audio.set_frame_rate(16000)
         # wav_path = "temp.wav"
         # audio.export(wav_path, format="wav")
-        model = whisper.load_model("base")
+        model = whisper.load_model("tiny")
         result = model.transcribe(audio_path)
         print(result["text"])
