@@ -10,6 +10,7 @@ from django.core.files import File
 import requests
 from tempfile import NamedTemporaryFile
 from ieltstest.openai import writing_prompts
+import whisper
 
 STATUS = (
     ('draft', 'Draft'),
@@ -392,6 +393,11 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
 
+    def get_evaluation(self, section):
+        # Get Questions
+
+        return ""
+
 
 class SpeakingAttemptAudio(models.Model):
     attempt = models.ForeignKey(
@@ -400,11 +406,17 @@ class SpeakingAttemptAudio(models.Model):
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     audio = models.FileField(
         help_text='Add Audio file for the speaking attempt')
+    audio_text = models.TextField(null=True, help_text='Text converted from the original audio')
     timestamps = models.JSONField(
         null=True, help_text='Timestamps for each question in the audio', blank=True)
 
     def __str__(self):
         return self.attempt.slug
+
+    def convert_audio_to_text(self):
+        model = whisper.load_model("tiny")
+        result = model.transcribe(self.audio.path)
+        print(result["text"])
 
 
 def update_form_fields_with_ids(module):

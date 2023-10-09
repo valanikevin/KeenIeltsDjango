@@ -21,6 +21,10 @@ urlpatterns = [
     path('get_writing_bands/<slug:attempt_slug>/',
          tests_views.get_writing_bands, name='get_writing_bands'),
     path('get_writing_evaluation/<slug:attempt_slug>/',
-         tests_views.get_writing_evaluation, name='get_writing_evaluation')
+         tests_views.get_writing_evaluation, name='get_writing_evaluation'),
+
+    # Speaking
+    path('get_speaking_evaluation/<slug:attempt_slug>/<slug:section_slug>/',
+         tests_views.get_speaking_evaluation, name="get_speaking_evaluation"),
 
 ]

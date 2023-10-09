@@ -3,7 +3,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection
+from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt
 from rest_framework.permissions import IsAuthenticated
 import json
 import re
@@ -182,6 +182,16 @@ def get_writing_evaluation(request, attempt_slug):
     else:
         attempt = openai_get_writing_evaluation(attempt)
         return Response(attempt.evaluation_json)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_speaking_evaluation(request, attempt_slug, section_slug):
+    attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
+    section = SpeakingSection.objects.get(slug=section_slug)
+
+    
+    return Response()
 
 
 def openai_get_writing_bands(attempt):
