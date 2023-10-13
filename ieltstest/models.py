@@ -396,6 +396,11 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     def get_evaluation(self, section):
         # Get Questions
 
+        # Get Audios
+
+        # Generate OpenAI Evaluation
+
+        # Return Evaluation
         return ""
 
 
@@ -406,7 +411,8 @@ class SpeakingAttemptAudio(models.Model):
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     audio = models.FileField(
         help_text='Add Audio file for the speaking attempt')
-    audio_text = models.TextField(null=True, help_text='Text converted from the original audio')
+    audio_text = models.TextField(
+        null=True, help_text='Text converted from the original audio')
     timestamps = models.JSONField(
         null=True, help_text='Timestamps for each question in the audio', blank=True)
 
@@ -414,9 +420,12 @@ class SpeakingAttemptAudio(models.Model):
         return self.attempt.slug
 
     def convert_audio_to_text(self):
-        model = whisper.load_model("tiny")
-        result = model.transcribe(self.audio.path)
-        print(result["text"])
+        if not self.audio_text:
+            model = whisper.load_model("tiny")
+            result = model.transcribe(self.audio.path)
+            self.audio_text = result["text"]
+            self.save()
+        return self.audio_text
 
 
 def update_form_fields_with_ids(module):
