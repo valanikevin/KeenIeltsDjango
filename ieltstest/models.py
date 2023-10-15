@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.files import File
 import requests
 from tempfile import NamedTemporaryFile
-from ieltstest.openai import writing_prompts
+from ieltstest.openai import writing_prompts, speaking_prompts
 import whisper
 import os
 from langchain.llms import OpenAI
@@ -408,7 +408,15 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         audio_text = attempt_audio.audio_to_text
 
         # Generate OpenAI Evaluation
-        evaluation = openai_get_speaking_evaluation(questions, audio_text)
+        evaluation = openai_get_speaking_evaluation(
+            section, questions, audio_text)
+
+        _evaluation = self.evaluation or {}
+
+        _evaluation[section.id] = evaluation
+
+        self.evaluation = eval(str(_evaluation))
+        self.save()
 
         # Return Evaluation
         return evaluation
@@ -634,11 +642,20 @@ def process_writing_content(text):
     return text
 
 
-def openai_get_speaking_evaluation(questions, audio_text):
-    from langchain.chains import SequentialChain
+def openai_get_speaking_evaluation(section, questions, audio_text):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 
-    
+    questions_list = [question.question for question in questions]
 
-    return 1
+    prompt = PromptTemplate(template=speaking_prompts.speaking_evaluation_prompt, input_variables=[
+                            "section", "questions_list", "audio_text"])
+
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo",
+                   temperature=0.6), prompt=prompt, verbose=True)
+
+    evaluation = llm.predict(section=section.section,
+                             questions_list=questions_list,
+                             audio_text=audio_text)
+
+    return evaluation

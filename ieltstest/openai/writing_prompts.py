@@ -100,24 +100,3 @@ Your evaluation should be written here for improvements made.
 """
 
 
-# Speaking Prompt Template
-
-speaking_evaluation_prompt = """
-You are a IELTS speaking test evaluator, your job is to consider given questions, and analyze the text converted from audio and provide detailed improvement feedback, and score for the test taker as per JSON format specified below.
-You will be provided with the IELTS task, list of questions that was asked to the test taker, and text from speech recognization.
-
-IELTS Speaking Test: {test_part_number},
-Questions Asked: {questions_list},
-Text from Speech Recognization: {audio_text},
-
-Provide your response in the JSON format only, in the following format:
-{
-"overall_band_score": "[band_score_placeholder]",
-"nicely_done": "[nicely_done_placeholder]",
-"things_to_improve": "[things_to_improve_placeholder]",
-"active_vocabulary_count": "[Number of active vocabulary count]",
-"unique_words_count": "[Number of unique word count]",
-"coherence_suggestion": "[Coherence Suggestions placeholder]",
-}
-
-"""
