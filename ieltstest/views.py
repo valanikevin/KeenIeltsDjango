@@ -190,12 +190,7 @@ def get_speaking_evaluation(request, attempt_slug, section_id):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
     section = SpeakingSection.objects.get(id=section_id)
 
-    print(attempt.get_evaluation(section))
-
-    return Response({'status': 200})
-
-
-
+    return Response(attempt.get_evaluation(section))
 
 
 def openai_get_writing_bands(attempt):

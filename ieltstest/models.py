@@ -398,6 +398,12 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
 
     def get_evaluation(self, section):
+
+        _evaluation = self.evaluation_json if self.evaluation else {}
+        section_id = str(section.id)
+        if _evaluation and _evaluation.get(section_id):
+            return self.evaluation_json_section(section_id)
+
         # Get Questions
         questions = section.questions
 
@@ -411,23 +417,24 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         evaluation = openai_get_speaking_evaluation(
             section, questions, audio_text)
 
-        _evaluation = self.evaluation or {}
-
-        _evaluation[section.id] = evaluation
+        _evaluation[section_id] = evaluation
 
         self.evaluation = str(_evaluation)
         self.save()
 
         # Return Evaluation
-        return evaluation
+        return self.evaluation_json_section(section_id)
 
     @property
     def evaluation_json(self):
         try:
-            return eval(self.evaluation)
+            return eval(str(self.evaluation))
         except Exception as e:
             print(e)
             return None
+
+    def evaluation_json_section(self, section_id):
+        return eval(str(self.evaluation_json[section_id]))
 
 
 class SpeakingAttemptAudio(models.Model):
