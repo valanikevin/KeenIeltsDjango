@@ -8,5 +8,5 @@ IELTS Speaking Test: {section},
 Questions Asked: {questions_list},
 Text from Speech Recognization: {audio_text},
 
-Provide your response in the JSON format only, in the following keys: overall_band_score (decimal), nicely_done (HTML List/string/ 50-100 words), things_to_improve (HTML List/string/ 50-100 words), active_vocabulary_count (integer), unique_words_count (integer), coherence_suggestion (HTML List/string/ 50-100 words).
+Provide your response in the JSON format only, in the following keys: overall_band_score (decimal), nicely_done (HTML List/string/ 50-100 words), things_to_improve (HTML List/string/ 100-150 words), active_vocabulary_count (integer), unique_words_count (integer), coherence_suggestion (HTML List/string/ 50-100 words).
 """
