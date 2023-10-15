@@ -11,6 +11,10 @@ import requests
 from tempfile import NamedTemporaryFile
 from ieltstest.openai import writing_prompts
 import whisper
+import os
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain, SimpleSequentialChain
 
 STATUS = (
     ('draft', 'Draft'),
@@ -395,13 +399,19 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     def get_evaluation(self, section):
         # Get Questions
+        questions = section.questions
 
         # Get Audios
+        attempt_audio = SpeakingAttemptAudio.objects.get(
+            attempt=self, section=section)
+
+        audio_text = attempt_audio.audio_to_text
 
         # Generate OpenAI Evaluation
+        evaluation = openai_get_speaking_evaluation(questions, audio_text)
 
         # Return Evaluation
-        return ""
+        return evaluation
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -419,7 +429,8 @@ class SpeakingAttemptAudio(models.Model):
     def __str__(self):
         return self.attempt.slug
 
-    def convert_audio_to_text(self):
+    @property
+    def audio_to_text(self):
         if not self.audio_text:
             model = whisper.load_model("tiny")
             result = model.transcribe(self.audio.path)
@@ -621,3 +632,13 @@ def extract_between(text, start, end):
 def process_writing_content(text):
     text = text.replace('\n', '</br>')
     return text
+
+
+def openai_get_speaking_evaluation(questions, audio_text):
+    from langchain.chains import SequentialChain
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+
+    
+
+    return 1

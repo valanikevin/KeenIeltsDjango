@@ -186,12 +186,16 @@ def get_writing_evaluation(request, attempt_slug):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def get_speaking_evaluation(request, attempt_slug, section_slug):
+def get_speaking_evaluation(request, attempt_slug, section_id):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
-    section = SpeakingSection.objects.get(slug=section_slug)
+    section = SpeakingSection.objects.get(id=section_id)
 
-    
-    return Response()
+    print(attempt.get_evaluation(section))
+
+    return Response({'status': 200})
+
+
+
 
 
 def openai_get_writing_bands(attempt):
