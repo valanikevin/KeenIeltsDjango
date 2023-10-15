@@ -415,11 +415,19 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
         _evaluation[section.id] = evaluation
 
-        self.evaluation = eval(str(_evaluation))
+        self.evaluation = str(_evaluation)
         self.save()
 
         # Return Evaluation
         return evaluation
+
+    @property
+    def evaluation_json(self):
+        try:
+            return eval(self.evaluation)
+        except Exception as e:
+            print(e)
+            return None
 
 
 class SpeakingAttemptAudio(models.Model):
