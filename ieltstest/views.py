@@ -186,9 +186,9 @@ def get_writing_evaluation(request, attempt_slug):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def get_speaking_evaluation(request, attempt_slug, section_id):
+def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
-
+    
 
     return Response(attempt.get_evaluation())
 

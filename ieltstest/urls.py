@@ -24,7 +24,7 @@ urlpatterns = [
          tests_views.get_writing_evaluation, name='get_writing_evaluation'),
 
     # Speaking
-    path('get_speaking_evaluation/<slug:attempt_slug>/<slug:section_id>/',
+    path('get_speaking_evaluation/<slug:attempt_slug>/',
          tests_views.get_speaking_evaluation, name="get_speaking_evaluation"),
 
 ]
