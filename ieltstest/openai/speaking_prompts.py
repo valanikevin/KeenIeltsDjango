@@ -7,5 +7,5 @@ You will be provided with the IELTS task, list of questions that was asked to th
 
 {data}
 
-Provide your response in the JSON format only, in the following keys: overall_band_score (decimal), nicely_done (HTML List/string/ 50-100 words), things_to_improve (HTML List/string/ 100-150 words), active_vocabulary_count (integer), unique_words_count (integer), coherence_suggestion (HTML List/string/ 50-100 words).
+Provide your response in the JSON format only, in the following keys: overall_band_score (decimal),fluency_and_coherence_bands (decimal), fluency_and_coherence_feedback (string/ 50-100 words), grammatical_range_and_accuracy_bands (decimal) , grammatical_range_and_accuracy_feedback (string/ 50-100 words), lexical_resource_bands (decimal), lexical_resource_feedback (string/ 50-100 words), pronunciation_bands (decimal), pronunciation_feedback (string/ 50-100 words), overall_suggestions_feedback (string/100 words).
 """
