@@ -188,9 +188,9 @@ def get_writing_evaluation(request, attempt_slug):
 @permission_classes([IsAuthenticated])
 def get_speaking_evaluation(request, attempt_slug, section_id):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
-    section = SpeakingSection.objects.get(id=section_id)
 
-    return Response(attempt.get_evaluation(section))
+
+    return Response(attempt.get_evaluation())
 
 
 def openai_get_writing_bands(attempt):

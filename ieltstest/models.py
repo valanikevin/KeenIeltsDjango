@@ -397,33 +397,19 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
 
-    def get_evaluation(self, section):
+    def get_evaluation(self):
 
-        _evaluation = self.evaluation_json if self.evaluation else {}
-        section_id = str(section.id)
-        if _evaluation and _evaluation.get(section_id):
-            return self.evaluation_json_section(section_id)
-
-        # Get Questions
-        questions = section.questions
-
-        # Get Audios
-        attempt_audio = SpeakingAttemptAudio.objects.get(
-            attempt=self, section=section)
-
-        audio_text = attempt_audio.audio_to_text
+        if self.evaluation:
+            return self.evaluation_json
 
         # Generate OpenAI Evaluation
-        evaluation = openai_get_speaking_evaluation(
-            section, questions, audio_text)
+        evaluation = openai_get_speaking_evaluation(self)
 
-        _evaluation[section_id] = evaluation
-
-        self.evaluation = str(_evaluation)
+        self.evaluation = str(evaluation)
         self.save()
 
         # Return Evaluation
-        return self.evaluation_json_section(section_id)
+        return self.evaluation_json_section()
 
     @property
     def evaluation_json(self):
@@ -433,8 +419,13 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
             print(e)
             return None
 
-    def evaluation_json_section(self, section_id):
-        return eval(str(self.evaluation_json[section_id]))
+    def evaluation_json_section(self):
+        return eval(str(self.evaluation_json))
+
+    @property
+    def audios(self):
+        return SpeakingAttemptAudio.objects.filter(
+            attempt=self).order_by('section__section')
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -657,20 +648,27 @@ def process_writing_content(text):
     return text
 
 
-def openai_get_speaking_evaluation(section, questions, audio_text):
+def openai_get_speaking_evaluation(attempt):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 
-    questions_list = [question.question for question in questions]
+    data = ""
+    for audio in attempt.audios:
+        question_list = [
+            question.question for question in audio.section.questions]
+
+        data = data + f"""
+IELTS Speaking Part: {audio.section.section},
+Questions Asked: {question_list},
+Test Taker Audio Transcript: {audio.audio_text}\n\n
+"""
 
     prompt = PromptTemplate(template=speaking_prompts.speaking_evaluation_prompt, input_variables=[
-                            "section", "questions_list", "audio_text"])
+                            "data"])
 
-    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo",
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
                    temperature=0.6), prompt=prompt, verbose=True)
 
-    evaluation = llm.predict(section=section.section,
-                             questions_list=questions_list,
-                             audio_text=audio_text)
-
+    evaluation = llm.predict(data=data)
+    print(evaluation)
     return evaluation
