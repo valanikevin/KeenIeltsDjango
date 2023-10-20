@@ -12,6 +12,7 @@ from tempfile import NamedTemporaryFile
 from ieltstest.openai import writing_prompts, speaking_prompts
 import whisper
 import os
+import json
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SimpleSequentialChain
@@ -320,25 +321,49 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
     def save(self, *args, **kwargs):
         return super(WritingAttempt, self).save(*args, **kwargs)
 
+    def get_evaluation(self, section):
+
+        if self.evaluation and self.evaluation_json.get(str(section.id)):
+            return self.evaluation_json.get(str(section.id))
+
+        evaluation = openai_get_writing_evaluation(self, section)
+        _evalution = {
+            str(section.id): evaluation
+        }
+        self.evaluation = _evalution
+        self.save()
+
+        return self.evaluation_json.get(str(section.id))
+
     @property
     def evaluation_json(self):
-        evaluation = eval(str(self.evaluation))
-        json_evaluation = {}
+        try:
+            evaluation = eval(str(self.evaluation))
+            print(evaluation)
+            return evaluation
+        except Exception as e:
+            print(e)
+            return {}
 
-        for section in evaluation:
-            content = evaluation[section]
-            improved_answer = extract_between(
-                content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
-            improvements_made = extract_between(
-                content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
+    # @property
+    # def evaluation_json(self):
+    #     evaluation = eval(str(self.evaluation))
+    #     json_evaluation = {}
 
-            improved_answer = process_writing_content(improved_answer)
-            improvements_made = process_writing_content(improvements_made)
+    #     for section in evaluation:
+    #         content = evaluation[section]
+    #         improved_answer = extract_between(
+    #             content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
+    #         improvements_made = extract_between(
+    #             content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
 
-            json_evaluation[str(section)] = {
-                'improved_answer': improved_answer, 'improvements_made': improvements_made}
+    #         improved_answer = process_writing_content(improved_answer)
+    #         improvements_made = process_writing_content(improvements_made)
 
-        return json_evaluation
+    #         json_evaluation[str(section)] = {
+    #             'improved_answer': improved_answer, 'improvements_made': improvements_made}
+
+    #     return json_evaluation
 
     @property
     def evaluation_bands_json(self):
@@ -673,10 +698,17 @@ Test Taker Audio Transcript: {audio.audio_text}\n\n
     print(evaluation)
     return evaluation
 
-def openai_get_writing_evaluation(attempt):
+
+def openai_get_writing_evaluation(attempt, section):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 
-    
+    answer = attempt.answers.get(str(section.id))
 
-    return
+    prompt = PromptTemplate(template=writing_prompts.writing_evaluation_prompt, input_variables=[
+                            "task", "question", "answer"])
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
+                   temperature=0.6), prompt=prompt, verbose=True)
+    evaluation = llm.predict(task=section.section,
+                             question=section.questions, answer=answer)
+    return evaluation

@@ -3,7 +3,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt
+from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection
 from rest_framework.permissions import IsAuthenticated
 import json
 import re
@@ -174,21 +174,29 @@ def get_writing_bands(request, attempt_slug):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def get_writing_evaluation(request, attempt_slug):
+def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
+    section = WritingSection.objects.get(id=section_id)
+    evaluation = eval(attempt.get_evaluation(section=section))
+    return Response(evaluation)
 
-    if attempt.evaluation:
-        return Response(attempt.evaluation_json)
-    else:
-        attempt = openai_get_writing_evaluation(attempt)
-        return Response(attempt.evaluation_json)
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def get_writing_evaluation(request, attempt_slug):
+#     attempt = WritingAttempt.objects.get(slug=attempt_slug)
+
+#     if attempt.evaluation:
+#         return Response(attempt.evaluation_json)
+#     else:
+#         attempt = openai_get_writing_evaluation(attempt)
+#         return Response(attempt.evaluation_json)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
-    
 
     return Response(attempt.get_evaluation())
 
