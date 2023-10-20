@@ -399,8 +399,8 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     def get_evaluation(self):
 
-        if self.evaluation:
-            return self.evaluation_json
+        # if self.evaluation:
+        #     return self.evaluation_json
 
         # Generate OpenAI Evaluation
         evaluation = openai_get_speaking_evaluation(self)
@@ -672,3 +672,11 @@ Test Taker Audio Transcript: {audio.audio_text}\n\n
     evaluation = llm.predict(data=data)
     print(evaluation)
     return evaluation
+
+def openai_get_writing_evaluation(attempt):
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+
+    
+
+    return
