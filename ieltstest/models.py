@@ -345,36 +345,6 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
             print(e)
             return {}
 
-    # @property
-    # def evaluation_json(self):
-    #     evaluation = eval(str(self.evaluation))
-    #     json_evaluation = {}
-
-    #     for section in evaluation:
-    #         content = evaluation[section]
-    #         improved_answer = extract_between(
-    #             content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
-    #         improvements_made = extract_between(
-    #             content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
-
-    #         improved_answer = process_writing_content(improved_answer)
-    #         improvements_made = process_writing_content(improvements_made)
-
-    #         json_evaluation[str(section)] = {
-    #             'improved_answer': improved_answer, 'improvements_made': improvements_made}
-
-    #     return json_evaluation
-
-    @property
-    def evaluation_bands_json(self):
-        json_evaluation = {}
-        evaluation = eval(str(self.evaluation_bands))
-
-        for section in evaluation:
-            content = evaluation[section]
-            json_evaluation[str(section)] = eval(content)
-        return json_evaluation
-
 
 class SpeakingModule(IndividualModuleAbstract):
     def __str__(self):
@@ -424,8 +394,8 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     def get_evaluation(self):
 
-        # if self.evaluation:
-        #     return self.evaluation_json
+        if self.evaluation:
+            return self.evaluation_json
 
         # Generate OpenAI Evaluation
         evaluation = openai_get_speaking_evaluation(self)

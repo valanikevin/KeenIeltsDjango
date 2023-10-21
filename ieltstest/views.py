@@ -162,35 +162,11 @@ def get_attempt(request, module_type, attempt_slug):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def get_writing_bands(request, attempt_slug):
-    attempt = WritingAttempt.objects.get(slug=attempt_slug)
-
-    if attempt.evaluation_bands:
-        return Response(attempt.evaluation_bands_json)
-    else:
-        attempt = openai_get_writing_bands(attempt)
-        return Response(attempt.evaluation_bands_json)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
     section = WritingSection.objects.get(id=section_id)
     evaluation = eval(attempt.get_evaluation(section=section))
     return Response(evaluation)
-
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def get_writing_evaluation(request, attempt_slug):
-#     attempt = WritingAttempt.objects.get(slug=attempt_slug)
-
-#     if attempt.evaluation:
-#         return Response(attempt.evaluation_json)
-#     else:
-#         attempt = openai_get_writing_evaluation(attempt)
-#         return Response(attempt.evaluation_json)
 
 
 @api_view(['POST'])
