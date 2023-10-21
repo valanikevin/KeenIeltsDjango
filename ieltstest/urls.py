@@ -18,8 +18,6 @@ urlpatterns = [
          tests_views.get_attempt, name='get_attempt'),
 
     # Writing
-    path('get_writing_bands/<slug:attempt_slug>/',
-         tests_views.get_writing_bands, name='get_writing_bands'),
     path('get_writing_evaluation/<slug:attempt_slug>/<int:section_id>/',
          tests_views.get_writing_evaluation, name='get_writing_evaluation'),
 
