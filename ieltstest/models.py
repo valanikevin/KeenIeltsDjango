@@ -315,8 +315,6 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation = models.TextField(
         null=True, blank=True, help_text='Evaluation for this attempt')
-    evaluation_bands = models.TextField(
-        null=True, blank=True, help_text='Bands for this attempt')
 
     def save(self, *args, **kwargs):
         return super(WritingAttempt, self).save(*args, **kwargs)
