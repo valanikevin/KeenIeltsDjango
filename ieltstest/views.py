@@ -165,7 +165,7 @@ def get_attempt(request, module_type, attempt_slug):
 def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
     section = WritingSection.objects.get(id=section_id)
-    evaluation = eval(attempt.get_evaluation(section=section))
+    evaluation = attempt.get_evaluation(section=section)
     return Response(evaluation)
 
 

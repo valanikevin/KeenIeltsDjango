@@ -322,28 +322,25 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         return super(WritingAttempt, self).save(*args, **kwargs)
 
     def get_evaluation(self, section):
-
-        if self.evaluation and self.evaluation_json.get(str(section.id)):
-            return self.evaluation_json.get(str(section.id))
+        if section.section == "Task 1" and self.evaluation:
+            return evalution_json(self.evaluation)
+        elif section.section == "Task 2" and self.evaluation_2:
+            return evalution_json(self.evaluation_2)
 
         evaluation = openai_get_writing_evaluation(self, section)
-        _evalution = {
-            str(section.id): evaluation
-        }
-        self.evaluation = _evalution
+        if section.section == "Task 1":
+            self.evaluation = evaluation
+        elif section.section == "Task 2":
+            self.evaluation_2 = evaluation
+
         self.save()
 
-        return self.evaluation_json.get(str(section.id))
+        if section.section == "Task 1" and self.evaluation:
+            return evalution_json(self.evaluation)
+        elif section.section == "Task 2" and self.evaluation_2:
+            return evalution_json(self.evaluation_2)
 
-    @property
-    def evaluation_json(self):
-        try:
-            evaluation = eval(str(self.evaluation))
-            print(evaluation)
-            return evaluation
-        except Exception as e:
-            print(e)
-            return {}
+        return {}
 
 
 class SpeakingModule(IndividualModuleAbstract):
@@ -682,3 +679,12 @@ def openai_get_writing_evaluation(attempt, section):
     evaluation = llm.predict(task=section.section,
                              question=section.questions, answer=answer)
     return evaluation
+
+
+def evalution_json(data):
+    try:
+        evaluation = eval(str(data))
+        return evaluation
+    except Exception as e:
+        print(e)
+        return {}
