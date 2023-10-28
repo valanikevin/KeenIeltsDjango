@@ -166,6 +166,7 @@ def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
     section = WritingSection.objects.get(id=section_id)
     evaluation = attempt.get_evaluation(section=section)
+    evaluation['test_overall_bands'] = attempt.bands
     return Response(evaluation)
 
 
@@ -175,66 +176,3 @@ def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
 
     return Response(attempt.get_evaluation())
-
-
-def openai_get_writing_bands(attempt):
-    openai.api_key = settings.OPENAI_SECRET
-    user_answers = attempt.answers
-
-    bands = {}
-
-    for answer in user_answers:
-        section = attempt.module.sections.filter(id=int(answer)).first()
-        task = section.task
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": writing_prompts.PROMPT0},
-                {"role": "system", "content": f'TASK: {task}'},
-                {"role": "user",
-                    "content": f'User Answer: {user_answers[answer]}'},
-                {"role": "system", "content": writing_prompts.PROMPT2},
-                {"role": "system", "content": writing_prompts.PROMPT3},
-                {"role": "system", "content": writing_prompts.PROMPT4},
-            ]
-        )
-        content = sanitize_json_string(
-            str(completion.choices[0].message["content"]))
-        bands[section.id] = content
-
-    attempt.evaluation_bands = bands
-    attempt.save()
-    return attempt
-
-
-def openai_get_writing_evaluation(attempt):
-    openai.api_key = settings.OPENAI_SECRET
-    user_answers = attempt.answers
-
-    evaluation = {}
-
-    for answer in user_answers:
-        section = attempt.module.sections.filter(id=int(answer)).first()
-        task = section.task
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k-0613",
-            messages=[
-                {"role": "user", "content": writing_prompts.PROMPT0},
-                {"role": "user", "content": f'TASK: {task}'},
-                {"role": "user",
-                    "content": f'My Answer: {user_answers[answer]}'},
-                {"role": "user", "content": writing_prompts.PROMPT71},
-                {"role": "user", "content": writing_prompts.PROMPT8},
-            ]
-        )
-        content = completion.choices[0].message["content"]
-        evaluation[section.id] = content
-    attempt.evaluation = evaluation
-    attempt.save()
-    return attempt
-
-
-def sanitize_json_string(s):
-    s = s.replace("'", '"')  # Replace single quotes with double quotes
-    s = re.sub(r'\\(?![/uUnN"])', r'\\\\', s)  # Escape stray backslashes
-    return s
