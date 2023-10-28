@@ -166,7 +166,6 @@ def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
     section = WritingSection.objects.get(id=section_id)
     evaluation = attempt.get_evaluation(section=section)
-    evaluation['test_overall_bands'] = attempt.bands
     return Response(evaluation)
 
 
