@@ -360,6 +360,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
             return evalution_json(self.evaluation_2)
 
         evaluation = openai_get_writing_evaluation(self, section)
+
         if section.section == "Task 1":
             self.evaluation = evaluation
         elif section.section == "Task 2":
@@ -420,6 +421,19 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        evaluation = self.evaluation_json
+        if evaluation:
+            self.bands = evaluation.get('overall_band_score')
+        return super(SpeakingAttempt, self).save(*args, **kwargs)
+
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_speaking_bands_description.get(self.bands)
+        else:
+            return None
 
     def get_evaluation(self):
 
@@ -722,7 +736,7 @@ def openai_get_writing_evaluation(attempt, section):
 
     if word_count < 70:
         return get_writing_empty_evaluation()
-    
+
     prompt = PromptTemplate(template=writing_prompts.writing_evaluation_prompt, input_variables=[
                             "task", "question", "answer"])
     llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
@@ -759,4 +773,25 @@ ielts_writing_bands_description = {
     8.0: "You write very fluently and accurately, effectively using complex language structures.",
     8.5: "You have a near-perfect command of the language, with only rare inaccuracies.",
     9.0: "You demonstrate full mastery over the language and write with complete accuracy."
+}
+
+
+ielts_speaking_bands_description = {
+    1.0: "You can only use isolated words and cannot communicate meaningfully in English.",
+    1.5: "You can understand and convey very basic information if spoken slowly and clearly.",
+    2.0: "You struggle significantly with understanding and expressing yourself in English.",
+    2.5: "You can communicate about basic needs and personal experiences, though with many errors and pauses.",
+    3.0: "You can convey and understand general meaning in familiar situations but often struggle with communication.",
+    3.5: "You can handle basic communication in your field, but with frequent misunderstandings.",
+    4.0: "You are able to discuss familiar topics but often face difficulty with complex ideas or unfamiliar topics.",
+    4.5: "You can communicate about familiar topics with relative ease, but struggle with abstract or complex discussions.",
+    5.0: "You can engage in generally effective communication, but may often misunderstand nuances or struggle with unfamiliar topics.",
+    5.5: "You can handle a variety of communication tasks effectively, but sometimes inaccuracies and misunderstandings occur.",
+    6.0: "You can communicate effectively in most situations, but occasional errors and misunderstandings can still occur.",
+    6.5: "You speak the language well and can participate in a variety of conversations, but may still have occasional difficulties or inaccuracies.",
+    7.0: "You have a good command of the language and can handle complex interactions and discussions, with occasional lapses in understanding or expression.",
+    7.5: "You are able to participate in complex discussions and express yourself clearly and naturally, with only occasional inaccuracies.",
+    8.0: "You speak fluently and accurately and can handle all kinds of communication situations, with only rare misunderstandings.",
+    8.5: "You have a full command of the language with almost perfect fluency, clarity, and coherence.",
+    9.0: "You have expert command of the language and can speak with precision, fluency, and sophistication."
 }
