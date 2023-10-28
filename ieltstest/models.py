@@ -691,10 +691,25 @@ Test Taker Audio Transcript: {audio.audio_text}\n\n
                             "data"])
 
     llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
-                   temperature=0.6), prompt=prompt, verbose=True)
+                   temperature=0.6), prompt=prompt)
 
     evaluation = llm.predict(data=data)
-    print(evaluation)
+    return evaluation
+
+
+def get_writing_empty_evaluation():
+    evaluation = {
+        "overall_band_score": 1.0,
+        "task_achievement_band_score": 1.0,
+        "coherence_and_cohesion_band_score": 1.0,
+        "lexical_resource_band_score": 1.0,
+        "grammatical_range_accuracy_band_score": 1.0,
+        "overall_personalized_feedback_suggestions": "It appears your response was too brief for a detailed evaluation in this task. Please attempt the exam again, ensuring you meet the required word count for accurate results.",
+        "vocabulary_choice_suggestions": [
+            "The response lacks adequate word count, so no vocabulary suggestions can be provided at this time.",
+        ]
+    }
+
     return evaluation
 
 
@@ -703,7 +718,11 @@ def openai_get_writing_evaluation(attempt, section):
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 
     answer = attempt.answers.get(str(section.id))
+    word_count = len(answer.split())
 
+    if word_count < 70:
+        return get_writing_empty_evaluation()
+    
     prompt = PromptTemplate(template=writing_prompts.writing_evaluation_prompt, input_variables=[
                             "task", "question", "answer"])
     llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
