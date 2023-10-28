@@ -13,6 +13,7 @@ from ieltstest.openai import writing_prompts, speaking_prompts
 import whisper
 import os
 import json
+import time
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SimpleSequentialChain
@@ -319,7 +320,38 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
         null=True, blank=True, help_text='Evaluation Task 2 for this attempt')
 
     def save(self, *args, **kwargs):
+        bands = 0.0
+        tasks = 0
+        if self.evaluation:
+            bands += evalution_json(self.evaluation).get('overall_band_score', 0.0)
+            tasks += 1
+        if self.evaluation_2:
+            bands += evalution_json(self.evaluation_2).get(
+                'overall_band_score', 0.0)
+            tasks += 1
+
+        # Calculate average if tasks > 0 to avoid division by zero
+        average_band = bands / tasks if tasks > 0 else 0.0
+
+        # Round the average_band as per IELTS rounding rules
+        fraction = average_band % 1
+        if fraction < 0.25:
+            rounded_band = int(average_band)
+        elif fraction < 0.75:
+            rounded_band = int(average_band) + 0.5
+        else:
+            rounded_band = int(average_band) + 1
+
+        self.bands = rounded_band
+
         return super(WritingAttempt, self).save(*args, **kwargs)
+
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_writing_bands_description.get(self.bands)
+        else:
+            return None
 
     def get_evaluation(self, section):
         if section.section == "Task 1" and self.evaluation:
@@ -688,3 +720,24 @@ def evalution_json(data):
     except Exception as e:
         print(e)
         return {}
+
+
+ielts_writing_bands_description = {
+    1.0: "You have no ability to use the language except for a few isolated words.",
+    1.5: "You can understand and convey very basic information if it's repeated slowly and clearly.",
+    2.0: "You have great difficulty understanding written English.",
+    2.5: "You can convey basic information about yourself and your immediate surroundings.",
+    3.0: "You can convey and understand only the general meaning in very familiar situations.",
+    3.5: "You can write short, simple sentences on familiar topics, but errors are frequent.",
+    4.0: "You have a basic competency in writing but make frequent errors and misunderstandings.",
+    4.5: "You can convey familiar information and ideas adequately, but struggle with unfamiliar topics.",
+    5.0: "You can communicate basic ideas related to familiar topics but have difficulty with complex language.",
+    5.5: "You generally have a good grasp of the language but may make occasional errors or show signs of hesitation.",
+    6.0: "You can write at a competent level, effectively conveying ideas but might lack in complex sentence structures.",
+    6.5: "You have a good command of the language, though there might be occasional inaccuracies and misunderstandings in some situations.",
+    7.0: "You have a strong command of the language and can produce complex sentences with few errors.",
+    7.5: "You show a high level of proficiency in writing, with only occasional inaccuracies.",
+    8.0: "You write very fluently and accurately, effectively using complex language structures.",
+    8.5: "You have a near-perfect command of the language, with only rare inaccuracies.",
+    9.0: "You demonstrate full mastery over the language and write with complete accuracy."
+}
