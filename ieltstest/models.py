@@ -626,14 +626,14 @@ def get_listening_ielts_score(correct, total=40):
         16: 5,
         13: 4.5,
         10: 4,
-        0: 0,
+        0: 1,
     }
 
     for map in score_map:
         if score >= map:
             return score_map[map]
 
-    return 0.0
+    return 1.0
 
 
 def get_reading_academic_ielts_score(correct, total=40):
@@ -650,14 +650,14 @@ def get_reading_academic_ielts_score(correct, total=40):
         15: 5,
         13: 4.5,
         10: 4,
-        0: 0,
+        0: 1,
     }
 
     for map in score_map:
         if score >= map:
             return score_map[map]
 
-    return 0.0
+    return 1.0
 
 
 def get_reading_general_ielts_score(correct, total=40):
