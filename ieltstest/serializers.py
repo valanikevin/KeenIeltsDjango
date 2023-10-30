@@ -132,6 +132,7 @@ class BookBasicSerializer(serializers.ModelSerializer):
 
 class ListeningAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
+    bands_description = serializers.SerializerMethodField()
 
     class Meta:
         model = ListeningAttempt
@@ -140,9 +141,13 @@ class ListeningAttemptSerializer(serializers.ModelSerializer):
     def get_book(self, instance):
         return BookBasicSerializer(instance.module.test.book, many=False).data
 
+    def get_bands_description(self, instance):
+        return instance.bands_description
+
 
 class ReadingAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
+    bands_description = serializers.SerializerMethodField()
 
     class Meta:
         model = ReadingAttempt
@@ -150,6 +155,9 @@ class ReadingAttemptSerializer(serializers.ModelSerializer):
 
     def get_book(self, instance):
         return BookBasicSerializer(instance.module.test.book, many=False).data
+
+    def get_bands_description(self, instance):
+        return instance.bands_description
 
 
 class WritingAttemptSerializer(serializers.ModelSerializer):
@@ -169,6 +177,7 @@ class WritingAttemptSerializer(serializers.ModelSerializer):
 
 class SpeakingAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
+    bands_description = serializers.SerializerMethodField()
 
     class Meta:
         model = SpeakingAttempt
@@ -176,6 +185,9 @@ class SpeakingAttemptSerializer(serializers.ModelSerializer):
 
     def get_book(self, instance):
         return BookBasicSerializer(instance.module.test.book, many=False).data
+
+    def get_bands_description(self, instance):
+        return instance.bands_description
 
 
 class ReadingModuleWithSectionSerializer(serializers.ModelSerializer):
