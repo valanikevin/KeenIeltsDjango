@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio
 
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
@@ -175,9 +175,22 @@ class WritingAttemptSerializer(serializers.ModelSerializer):
         return instance.bands_description
 
 
+class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
+    audio = serializers.SerializerMethodField()
+
+    def get_audio(self, obj):
+        url = f'http://localhost:8000{obj.audio.url}'
+        return url
+
+    class Meta:
+        model = SpeakingAttemptAudio
+        fields = '__all__'
+
+
 class SpeakingAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
+    audios = SpeakingAttemptAudioSerializer(many=True, read_only=True)
 
     class Meta:
         model = SpeakingAttempt
