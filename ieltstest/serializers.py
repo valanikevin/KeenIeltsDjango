@@ -191,6 +191,11 @@ class SpeakingAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
     audios = SpeakingAttemptAudioSerializer(many=True, read_only=True)
+    merged_audio = serializers.SerializerMethodField()
+
+    def get_merged_audio(self, obj):
+        url = f'http://localhost:8000{obj.merged_audio.url}'
+        return url
 
     class Meta:
         model = SpeakingAttempt
