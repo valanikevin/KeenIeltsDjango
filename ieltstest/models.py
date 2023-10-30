@@ -17,6 +17,9 @@ import time
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SimpleSequentialChain
+from django.core.files.base import ContentFile
+from pydub import AudioSegment
+from io import BytesIO
 
 STATUS = (
     ('draft', 'Draft'),
@@ -435,12 +438,20 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    merged_audio = models.FileField(
+        help_text="Merged Audio File from all the audios", null=True, blank=True)
 
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
+
+        if not self.merged_audio:
+            self = merge_speaking_audio(self)
+
         if evaluation:
             self.bands = evaluation.get('overall_band_score')
-        return super(SpeakingAttempt, self).save(*args, **kwargs)
+
+        # Save again to ensure the FileField and other fields are updated
+        super(SpeakingAttempt, self).save(*args, **kwargs)
 
     @property
     def bands_description(self):
@@ -478,6 +489,33 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     def audios(self):
         return SpeakingAttemptAudio.objects.filter(
             attempt=self).order_by('section__section')
+
+
+def merge_speaking_audio(instance):
+    print("Merging Audio")
+
+    # Initialize an empty AudioSegment object
+    merged_audio = AudioSegment.empty()
+
+    # Assuming 'audios' is a queryset
+    for audio in instance.audios.all():
+        audio_segment = AudioSegment.from_file(audio.audio.path)
+
+        # Concatenate audio
+        merged_audio += audio_segment
+
+    # Create in-memory byte buffer
+    buffer = BytesIO()
+    merged_audio.export(buffer, format='mp3')
+    buffer.seek(0)  # Rewind the buffer
+
+    # Create a Django ContentFile and save to the FileField
+    content_file = ContentFile(buffer.read(), 'merged_file.mp3')
+    instance.merged_audio = content_file
+
+    buffer.close()  # Close the buffer
+
+    return instance
 
 
 class SpeakingAttemptAudio(models.Model):
