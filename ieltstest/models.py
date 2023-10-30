@@ -224,6 +224,13 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
 
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_listening_bands_description.get(self.bands)
+        else:
+            return None
+
 
 class ReadingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
@@ -244,6 +251,13 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
                     attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
             return super(ReadingAttempt, attempt).save(*args, **kwargs)
         return super(ReadingAttempt, self).save(*args, **kwargs)
+
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_reading_bands_description.get(self.bands)
+        else:
+            return None
 
 
 class ReadingModule(IndividualModuleAbstract):
@@ -794,4 +808,44 @@ ielts_speaking_bands_description = {
     8.0: "You speak fluently and accurately and can handle all kinds of communication situations, with only rare misunderstandings.",
     8.5: "You have a full command of the language with almost perfect fluency, clarity, and coherence.",
     9.0: "You have expert command of the language and can speak with precision, fluency, and sophistication."
+}
+
+ielts_listening_bands_description = {
+    1.0: "You find it extremely difficult to understand any spoken English.",
+    1.5: "You can catch occasional words or phrases, but understanding spoken content is largely challenging.",
+    2.0: "You struggle to grasp the main points of clear and slow speech, even in very familiar contexts.",
+    2.5: "You can understand basic information and short conversations if spoken slowly and clearly.",
+    3.0: "You can catch the general meaning of slow and clear speech on familiar topics but often miss details.",
+    3.5: "You can understand the main ideas of clear speech on familiar topics but may get lost in complex or rapid speech.",
+    4.0: "You can follow most conversations and audio content on familiar subjects, though some phrases or idioms may be challenging.",
+    4.5: "You can understand straightforward factual information and follow conversations, but may struggle with complex ideas or unfamiliar contexts.",
+    5.0: "You can catch the main ideas in most audio content, but may miss some details or nuanced points.",
+    5.5: "You can understand a variety of audio content, from news to conversations, but might face difficulty with rapid or accented speech.",
+    6.0: "You have a competent understanding of spoken English in many contexts, but occasionally might miss details in complex or unfamiliar situations.",
+    6.5: "You can understand detailed language and recognize implicit meaning in various contexts, though some challenging situations might still pose difficulties.",
+    7.0: "You have a good command over understanding spoken English in diverse situations, including recognizing speaker opinions and attitudes.",
+    7.5: "You can handle a wide range of listening activities, from lectures to discussions, understanding detailed reasoning and implicit meaning.",
+    8.0: "You have a very good understanding of lengthy speeches, recognizing contradictions, and differentiating between facts and opinions.",
+    8.5: "You can comprehend virtually everything you hear, regardless of topic or speaker, with only occasional need for clarification.",
+    9.0: "You have an expert level of listening comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
+}
+
+ielts_reading_bands_description = {
+    1.0: "You have extreme difficulty understanding written English.",
+    1.5: "You can identify very basic words or phrases, but grasping meaning from sentences or paragraphs is challenging.",
+    2.0: "You can pick out familiar names and phrases but struggle to understand the main idea of the content.",
+    2.5: "You can understand basic information and short texts if they are related to familiar topics.",
+    3.0: "You can comprehend the general meaning of short texts but often miss details or specific information.",
+    3.5: "You can read and understand texts related to familiar topics but might struggle with more complex language or unfamiliar contexts.",
+    4.0: "You can understand most of the content you read, especially if it's on familiar subjects, but idiomatic or specialized language may be challenging.",
+    4.5: "You can understand texts that deal with everyday topics and can grasp the main idea of more complex content, but may miss some details.",
+    5.0: "You can comprehend texts from a variety of sources, but might face difficulty with abstract concepts or detailed arguments.",
+    5.5: "You have a solid grasp of the language, understanding main ideas and details in most texts, but complex or unfamiliar topics may pose challenges.",
+    6.0: "You can understand complex language and detailed reasoning in texts, though occasionally might miss nuanced points or implicit meanings.",
+    6.5: "You can read and interpret a wide range of texts, recognizing the writer's opinions, attitudes, and purposes, even if the topic is unfamiliar.",
+    7.0: "You have a good command of reading comprehension, understanding detailed information, and recognizing implicit meaning in various contexts.",
+    7.5: "You can handle a broad range of complex texts, understanding detailed reasoning, and distinguishing between facts and opinions.",
+    8.0: "You have a very good command of reading comprehension, understanding contradictions, and fully grasping content even when it deals with abstract concepts.",
+    8.5: "You can comprehend virtually everything you read, from complex articles to abstract writings, with a deep understanding of structure and meaning.",
+    9.0: "You have an expert level of reading comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
 }
