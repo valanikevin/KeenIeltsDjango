@@ -488,7 +488,7 @@ class SpeakingAttemptAudio(models.Model):
     audio = models.FileField(
         help_text='Add Audio file for the speaking attempt')
     audio_text = models.TextField(
-        null=True, help_text='Text converted from the original audio')
+        null=True, blank=True, help_text='Text converted from the original audio')
     timestamps = models.JSONField(
         null=True, help_text='Timestamps for each question in the audio', blank=True)
 
@@ -639,18 +639,18 @@ def get_listening_ielts_score(correct, total=40):
 def get_reading_academic_ielts_score(correct, total=40):
     score = int((correct/total)*40)
     score_map = {
-        39: 9,
+        39: 9.0,
         37: 8.5,
-        35: 8,
+        35: 8.0,
         33: 7.5,
-        30: 7,
+        30: 7.0,
         27: 6.5,
-        23: 6,
+        23: 6.0,
         19: 5.5,
-        15: 5,
+        15: 5.0,
         13: 4.5,
-        10: 4,
-        0: 1,
+        10: 4.0,
+        0: 1.0,
     }
 
     for map in score_map:
@@ -663,18 +663,18 @@ def get_reading_academic_ielts_score(correct, total=40):
 def get_reading_general_ielts_score(correct, total=40):
     score = int((correct/total)*40)
     score_map = {
-        40: 9,
+        40: 9.0,
         39: 8.5,
-        37: 8,
+        37: 8.0,
         36: 7.5,
-        34: 7,
+        34: 7.0,
         32: 6.5,
-        30: 6,
+        30: 6.0,
         27: 5.5,
-        23: 5,
+        23: 5.0,
         19: 4.5,
-        15: 4,
-        0: 0,
+        15: 4.0,
+        0: 0.0,
     }
 
     for map in score_map:
@@ -712,7 +712,7 @@ def openai_get_speaking_evaluation(attempt):
         data = data + f"""
 IELTS Speaking Part: {audio.section.section},
 Questions Asked: {question_list},
-Test Taker Audio Transcript: {audio.audio_text}\n\n
+Test Taker Audio Transcript: {audio.audio_to_text}\n\n
 """
 
     prompt = PromptTemplate(template=speaking_prompts.speaking_evaluation_prompt, input_variables=[
