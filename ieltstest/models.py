@@ -440,7 +440,8 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
-
+    merged_timestamps = models.JSONField(null=True, blank=True)
+    
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
 
@@ -503,6 +504,7 @@ def merge_speaking_audio(instance):
 
         # Concatenate audio
         merged_audio += audio_segment
+
 
     # Create in-memory byte buffer
     buffer = BytesIO()
