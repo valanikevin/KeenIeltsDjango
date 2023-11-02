@@ -9,7 +9,17 @@ from django.conf import settings
 from django.core.files import File
 import requests
 from tempfile import NamedTemporaryFile
-from ieltstest.openai import writing_prompts
+from ieltstest.openai import writing_prompts, speaking_prompts
+import whisper
+import os
+import json
+import time
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain, SimpleSequentialChain
+from django.core.files.base import ContentFile
+from pydub import AudioSegment
+from io import BytesIO
 
 STATUS = (
     ('draft', 'Draft'),
@@ -217,6 +227,13 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
             return super(ListeningAttempt, attempt).save(*args, **kwargs)
         return super(ListeningAttempt, self).save(*args, **kwargs)
 
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_listening_bands_description.get(self.bands)
+        else:
+            return None
+
 
 class ReadingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
@@ -237,6 +254,13 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
                     attempt.correct_answers, attempt.correct_answers+attempt.incorrect_answers)
             return super(ReadingAttempt, attempt).save(*args, **kwargs)
         return super(ReadingAttempt, self).save(*args, **kwargs)
+
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_reading_bands_description.get(self.bands)
+        else:
+            return None
 
 
 class ReadingModule(IndividualModuleAbstract):
@@ -308,42 +332,67 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
     answers = models.JSONField(
         null=True, blank=True, help_text='Answers that is attempted by user')
     evaluation = models.TextField(
-        null=True, blank=True, help_text='Evaluation for this attempt')
-    evaluation_bands = models.TextField(
-        null=True, blank=True, help_text='Bands for this attempt')
+        null=True, blank=True, help_text='Evaluation Task 1 for this attempt')
+    evaluation_2 = models.TextField(
+        null=True, blank=True, help_text='Evaluation Task 2 for this attempt')
 
     def save(self, *args, **kwargs):
+        bands = 0.0
+        tasks = 0
+        if self.evaluation:
+            bands += evalution_json(self.evaluation).get('overall_band_score', 0.0)
+            tasks += 1
+        if self.evaluation_2:
+            bands += evalution_json(self.evaluation_2).get(
+                'overall_band_score', 0.0)
+            tasks += 1
+
+        # Calculate average if tasks > 0 to avoid division by zero
+        average_band = bands / tasks if tasks > 0 else 0.0
+
+        # Round the average_band as per IELTS rounding rules
+        fraction = average_band % 1
+        if fraction < 0.25:
+            rounded_band = int(average_band)
+        elif fraction < 0.75:
+            rounded_band = int(average_band) + 0.5
+        else:
+            rounded_band = int(average_band) + 1
+
+        self.bands = rounded_band
+
+        if self.bands:
+            self.status = "Evaluated"
         return super(WritingAttempt, self).save(*args, **kwargs)
 
     @property
-    def evaluation_json(self):
-        evaluation = eval(str(self.evaluation))
-        json_evaluation = {}
+    def bands_description(self):
+        if self.bands:
+            return ielts_writing_bands_description.get(self.bands)
+        else:
+            return None
 
-        for section in evaluation:
-            content = evaluation[section]
-            improved_answer = extract_between(
-                content, '[IMPROVED_ANSWER]', '[/IMPROVED_ANSWER]')
-            improvements_made = extract_between(
-                content, '[IMPROVEMENTS_MADE]', '[/IMPROVEMENTS_MADE]')
+    def get_evaluation(self, section):
+        if section.section == "Task 1" and self.evaluation:
+            return evalution_json(self.evaluation)
+        elif section.section == "Task 2" and self.evaluation_2:
+            return evalution_json(self.evaluation_2)
 
-            improved_answer = process_writing_content(improved_answer)
-            improvements_made = process_writing_content(improvements_made)
+        evaluation = openai_get_writing_evaluation(self, section)
 
-            json_evaluation[str(section)] = {
-                'improved_answer': improved_answer, 'improvements_made': improvements_made}
+        if section.section == "Task 1":
+            self.evaluation = evaluation
+        elif section.section == "Task 2":
+            self.evaluation_2 = evaluation
 
-        return json_evaluation
+        self.save()
 
-    @property
-    def evaluation_bands_json(self):
-        json_evaluation = {}
-        evaluation = eval(str(self.evaluation_bands))
+        if section.section == "Task 1" and self.evaluation:
+            return evalution_json(self.evaluation)
+        elif section.section == "Task 2" and self.evaluation_2:
+            return evalution_json(self.evaluation_2)
 
-        for section in evaluation:
-            content = evaluation[section]
-            json_evaluation[str(section)] = eval(content)
-        return json_evaluation
+        return {}
 
 
 class SpeakingModule(IndividualModuleAbstract):
@@ -391,6 +440,93 @@ class SpeakingSectionQuestion(WeightedBaseModel):
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
+    merged_audio = models.FileField(
+        help_text="Merged Audio File from all the audios", null=True, blank=True)
+    merged_timestamps = models.JSONField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        evaluation = self.evaluation_json
+
+        if not self.merged_audio:
+            self = merge_speaking_audio(self)
+
+        if evaluation:
+            self.bands = evaluation.get('overall_band_score')
+            self.status = "Evaluated"
+        # Save again to ensure the FileField and other fields are updated
+        super(SpeakingAttempt, self).save(*args, **kwargs)
+
+    @property
+    def bands_description(self):
+        if self.bands:
+            return ielts_speaking_bands_description.get(self.bands)
+        else:
+            return None
+
+    def get_evaluation(self):
+
+        if self.evaluation:
+            return self.evaluation_json
+
+        # Generate OpenAI Evaluation
+        evaluation = openai_get_speaking_evaluation(self)
+
+        self.evaluation = str(evaluation)
+        self.save()
+
+        # Return Evaluation
+        return self.evaluation_json_section()
+
+    @property
+    def evaluation_json(self):
+        try:
+            return eval(str(self.evaluation))
+        except Exception as e:
+            print(e)
+            return None
+
+    def evaluation_json_section(self):
+        return eval(str(self.evaluation_json))
+
+    @property
+    def audios(self):
+        return SpeakingAttemptAudio.objects.filter(
+            attempt=self).order_by('section__section')
+
+
+def merge_speaking_audio(instance):
+    # Initialize an empty AudioSegment object
+    merged_audio = AudioSegment.empty()
+    audio_length = 0
+    timestamp_secs = 0
+    timestamps = {}
+    # Assuming 'audios' is a queryset
+    for audio in instance.audios.all():
+        audio_segment = AudioSegment.from_file(audio.audio.path)
+        for stamp in audio.timestamps:
+            timestamps[stamp] = timestamp_secs
+            timestamp_secs = timestamp_secs + \
+                audio.timestamps.get(stamp).get('elapsedTime')
+        _audio_length = len(audio_segment) / 1000.0
+        audio_length = audio_length + _audio_length
+        timestamp_secs = audio_length
+
+        # Concatenate audio
+        merged_audio += audio_segment
+
+    instance.merged_timestamps = timestamps
+    # Create in-memory byte buffer
+    buffer = BytesIO()
+    merged_audio.export(buffer, format='mp3')
+    buffer.seek(0)  # Rewind the buffer
+
+    # Create a Django ContentFile and save to the FileField
+    content_file = ContentFile(buffer.read(), 'merged_file.mp3')
+    instance.merged_audio = content_file
+
+    buffer.close()  # Close the buffer
+
+    return instance
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -400,11 +536,22 @@ class SpeakingAttemptAudio(models.Model):
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     audio = models.FileField(
         help_text='Add Audio file for the speaking attempt')
+    audio_text = models.TextField(
+        null=True, blank=True, help_text='Text converted from the original audio')
     timestamps = models.JSONField(
         null=True, help_text='Timestamps for each question in the audio', blank=True)
 
     def __str__(self):
         return self.attempt.slug
+
+    @property
+    def audio_to_text(self):
+        if not self.audio_text:
+            model = whisper.load_model("tiny")
+            result = model.transcribe(self.audio.path)
+            self.audio_text = result["text"]
+            self.save()
+        return self.audio_text
 
 
 def update_form_fields_with_ids(module):
@@ -528,55 +675,55 @@ def get_listening_ielts_score(correct, total=40):
         16: 5,
         13: 4.5,
         10: 4,
-        0: 0,
+        0: 1,
     }
 
     for map in score_map:
         if score >= map:
             return score_map[map]
 
-    return 0.0
+    return 1.0
 
 
 def get_reading_academic_ielts_score(correct, total=40):
     score = int((correct/total)*40)
     score_map = {
-        39: 9,
+        39: 9.0,
         37: 8.5,
-        35: 8,
+        35: 8.0,
         33: 7.5,
-        30: 7,
+        30: 7.0,
         27: 6.5,
-        23: 6,
+        23: 6.0,
         19: 5.5,
-        15: 5,
+        15: 5.0,
         13: 4.5,
-        10: 4,
-        0: 0,
+        10: 4.0,
+        0: 1.0,
     }
 
     for map in score_map:
         if score >= map:
             return score_map[map]
 
-    return 0.0
+    return 1.0
 
 
 def get_reading_general_ielts_score(correct, total=40):
     score = int((correct/total)*40)
     score_map = {
-        40: 9,
+        40: 9.0,
         39: 8.5,
-        37: 8,
+        37: 8.0,
         36: 7.5,
-        34: 7,
+        34: 7.0,
         32: 6.5,
-        30: 6,
+        30: 6.0,
         27: 5.5,
-        23: 5,
+        23: 5.0,
         19: 4.5,
-        15: 4,
-        0: 0,
+        15: 4.0,
+        0: 0.0,
     }
 
     for map in score_map:
@@ -600,3 +747,154 @@ def extract_between(text, start, end):
 def process_writing_content(text):
     text = text.replace('\n', '</br>')
     return text
+
+
+def openai_get_speaking_evaluation(attempt):
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+
+    data = ""
+    for audio in attempt.audios:
+        question_list = [
+            question.question for question in audio.section.questions]
+
+        data = data + f"""
+IELTS Speaking Part: {audio.section.section},
+Questions Asked: {question_list},
+Test Taker Audio Transcript: {audio.audio_to_text}\n\n
+"""
+
+    prompt = PromptTemplate(template=speaking_prompts.speaking_evaluation_prompt, input_variables=[
+                            "data"])
+
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
+                   temperature=0.6), prompt=prompt)
+
+    evaluation = llm.predict(data=data)
+    return evaluation
+
+
+def get_writing_empty_evaluation():
+    evaluation = {
+        "overall_band_score": 1.0,
+        "task_achievement_band_score": 1.0,
+        "coherence_and_cohesion_band_score": 1.0,
+        "lexical_resource_band_score": 1.0,
+        "grammatical_range_accuracy_band_score": 1.0,
+        "overall_personalized_feedback_suggestions": "It appears your response was too brief for a detailed evaluation in this task. Please attempt the exam again, ensuring you meet the required word count for accurate results.",
+        "vocabulary_choice_suggestions": [
+            "The response lacks adequate word count, so no vocabulary suggestions can be provided at this time.",
+        ]
+    }
+
+    return evaluation
+
+
+def openai_get_writing_evaluation(attempt, section):
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+
+    answer = attempt.answers.get(str(section.id))
+    word_count = len(answer.split())
+
+    if word_count < 70:
+        return get_writing_empty_evaluation()
+
+    prompt = PromptTemplate(template=writing_prompts.writing_evaluation_prompt, input_variables=[
+                            "task", "question", "answer"])
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
+                   temperature=0.6), prompt=prompt, verbose=True)
+    evaluation = llm.predict(task=section.section,
+                             question=section.questions, answer=answer)
+    return evaluation
+
+
+def evalution_json(data):
+    try:
+        evaluation = eval(str(data))
+        return evaluation
+    except Exception as e:
+        print(e)
+        return {}
+
+
+ielts_writing_bands_description = {
+    1.0: "You have no ability to use the language except for a few isolated words.",
+    1.5: "You can understand and convey very basic information if it's repeated slowly and clearly.",
+    2.0: "You have great difficulty understanding written English.",
+    2.5: "You can convey basic information about yourself and your immediate surroundings.",
+    3.0: "You can convey and understand only the general meaning in very familiar situations.",
+    3.5: "You can write short, simple sentences on familiar topics, but errors are frequent.",
+    4.0: "You have a basic competency in writing but make frequent errors and misunderstandings.",
+    4.5: "You can convey familiar information and ideas adequately, but struggle with unfamiliar topics.",
+    5.0: "You can communicate basic ideas related to familiar topics but have difficulty with complex language.",
+    5.5: "You generally have a good grasp of the language but may make occasional errors or show signs of hesitation.",
+    6.0: "You can write at a competent level, effectively conveying ideas but might lack in complex sentence structures.",
+    6.5: "You have a good command of the language, though there might be occasional inaccuracies and misunderstandings in some situations.",
+    7.0: "You have a strong command of the language and can produce complex sentences with few errors.",
+    7.5: "You show a high level of proficiency in writing, with only occasional inaccuracies.",
+    8.0: "You write very fluently and accurately, effectively using complex language structures.",
+    8.5: "You have a near-perfect command of the language, with only rare inaccuracies.",
+    9.0: "You demonstrate full mastery over the language and write with complete accuracy."
+}
+
+
+ielts_speaking_bands_description = {
+    1.0: "You can only use isolated words and cannot communicate meaningfully in English.",
+    1.5: "You can understand and convey very basic information if spoken slowly and clearly.",
+    2.0: "You struggle significantly with understanding and expressing yourself in English.",
+    2.5: "You can communicate about basic needs and personal experiences, though with many errors and pauses.",
+    3.0: "You can convey and understand general meaning in familiar situations but often struggle with communication.",
+    3.5: "You can handle basic communication in your field, but with frequent misunderstandings.",
+    4.0: "You are able to discuss familiar topics but often face difficulty with complex ideas or unfamiliar topics.",
+    4.5: "You can communicate about familiar topics with relative ease, but struggle with abstract or complex discussions.",
+    5.0: "You can engage in generally effective communication, but may often misunderstand nuances or struggle with unfamiliar topics.",
+    5.5: "You can handle a variety of communication tasks effectively, but sometimes inaccuracies and misunderstandings occur.",
+    6.0: "You can communicate effectively in most situations, but occasional errors and misunderstandings can still occur.",
+    6.5: "You speak the language well and can participate in a variety of conversations, but may still have occasional difficulties or inaccuracies.",
+    7.0: "You have a good command of the language and can handle complex interactions and discussions, with occasional lapses in understanding or expression.",
+    7.5: "You are able to participate in complex discussions and express yourself clearly and naturally, with only occasional inaccuracies.",
+    8.0: "You speak fluently and accurately and can handle all kinds of communication situations, with only rare misunderstandings.",
+    8.5: "You have a full command of the language with almost perfect fluency, clarity, and coherence.",
+    9.0: "You have expert command of the language and can speak with precision, fluency, and sophistication."
+}
+
+ielts_listening_bands_description = {
+    1.0: "You find it extremely difficult to understand any spoken English.",
+    1.5: "You can catch occasional words or phrases, but understanding spoken content is largely challenging.",
+    2.0: "You struggle to grasp the main points of clear and slow speech, even in very familiar contexts.",
+    2.5: "You can understand basic information and short conversations if spoken slowly and clearly.",
+    3.0: "You can catch the general meaning of slow and clear speech on familiar topics but often miss details.",
+    3.5: "You can understand the main ideas of clear speech on familiar topics but may get lost in complex or rapid speech.",
+    4.0: "You can follow most conversations and audio content on familiar subjects, though some phrases or idioms may be challenging.",
+    4.5: "You can understand straightforward factual information and follow conversations, but may struggle with complex ideas or unfamiliar contexts.",
+    5.0: "You can catch the main ideas in most audio content, but may miss some details or nuanced points.",
+    5.5: "You can understand a variety of audio content, from news to conversations, but might face difficulty with rapid or accented speech.",
+    6.0: "You have a competent understanding of spoken English in many contexts, but occasionally might miss details in complex or unfamiliar situations.",
+    6.5: "You can understand detailed language and recognize implicit meaning in various contexts, though some challenging situations might still pose difficulties.",
+    7.0: "You have a good command over understanding spoken English in diverse situations, including recognizing speaker opinions and attitudes.",
+    7.5: "You can handle a wide range of listening activities, from lectures to discussions, understanding detailed reasoning and implicit meaning.",
+    8.0: "You have a very good understanding of lengthy speeches, recognizing contradictions, and differentiating between facts and opinions.",
+    8.5: "You can comprehend virtually everything you hear, regardless of topic or speaker, with only occasional need for clarification.",
+    9.0: "You have an expert level of listening comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
+}
+
+ielts_reading_bands_description = {
+    1.0: "You have extreme difficulty understanding written English.",
+    1.5: "You can identify very basic words or phrases, but grasping meaning from sentences or paragraphs is challenging.",
+    2.0: "You can pick out familiar names and phrases but struggle to understand the main idea of the content.",
+    2.5: "You can understand basic information and short texts if they are related to familiar topics.",
+    3.0: "You can comprehend the general meaning of short texts but often miss details or specific information.",
+    3.5: "You can read and understand texts related to familiar topics but might struggle with more complex language or unfamiliar contexts.",
+    4.0: "You can understand most of the content you read, especially if it's on familiar subjects, but idiomatic or specialized language may be challenging.",
+    4.5: "You can understand texts that deal with everyday topics and can grasp the main idea of more complex content, but may miss some details.",
+    5.0: "You can comprehend texts from a variety of sources, but might face difficulty with abstract concepts or detailed arguments.",
+    5.5: "You have a solid grasp of the language, understanding main ideas and details in most texts, but complex or unfamiliar topics may pose challenges.",
+    6.0: "You can understand complex language and detailed reasoning in texts, though occasionally might miss nuanced points or implicit meanings.",
+    6.5: "You can read and interpret a wide range of texts, recognizing the writer's opinions, attitudes, and purposes, even if the topic is unfamiliar.",
+    7.0: "You have a good command of reading comprehension, understanding detailed information, and recognizing implicit meaning in various contexts.",
+    7.5: "You can handle a broad range of complex texts, understanding detailed reasoning, and distinguishing between facts and opinions.",
+    8.0: "You have a very good command of reading comprehension, understanding contradictions, and fully grasping content even when it deals with abstract concepts.",
+    8.5: "You can comprehend virtually everything you read, from complex articles to abstract writings, with a deep understanding of structure and meaning.",
+    9.0: "You have an expert level of reading comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
+}
