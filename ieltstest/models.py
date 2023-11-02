@@ -361,6 +361,8 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
         self.bands = rounded_band
 
+        if self.bands:
+            self.status = "Evaluated"
         return super(WritingAttempt, self).save(*args, **kwargs)
 
     @property
@@ -441,7 +443,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
     merged_timestamps = models.JSONField(null=True, blank=True)
-    
+
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
 
@@ -450,7 +452,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
         if evaluation:
             self.bands = evaluation.get('overall_band_score')
-
+            self.status = "Evaluated"
         # Save again to ensure the FileField and other fields are updated
         super(SpeakingAttempt, self).save(*args, **kwargs)
 
@@ -493,19 +495,26 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
 
 def merge_speaking_audio(instance):
-    print("Merging Audio")
-
     # Initialize an empty AudioSegment object
     merged_audio = AudioSegment.empty()
-
+    audio_length = 0
+    timestamp_secs = 0
+    timestamps = {}
     # Assuming 'audios' is a queryset
     for audio in instance.audios.all():
         audio_segment = AudioSegment.from_file(audio.audio.path)
+        for stamp in audio.timestamps:
+            timestamps[stamp] = timestamp_secs
+            timestamp_secs = timestamp_secs + \
+                audio.timestamps.get(stamp).get('elapsedTime')
+        _audio_length = len(audio_segment) / 1000.0
+        audio_length = audio_length + _audio_length
+        timestamp_secs = audio_length
 
         # Concatenate audio
         merged_audio += audio_segment
 
-
+    instance.merged_timestamps = timestamps
     # Create in-memory byte buffer
     buffer = BytesIO()
     merged_audio.export(buffer, format='mp3')
