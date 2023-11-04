@@ -64,3 +64,21 @@ class UserCreationForm(forms.ModelForm):
             if hasattr(self, "save_m2m"):
                 self.save_m2m()
         return user
+
+
+class AccountSettingForm(forms.ModelForm):
+    testType = forms.ChoiceField(
+        choices=['academic', 'general'], required=True)
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', )
+
+    def save(self, commit=True):
+        user = super(AccountSettingForm, self).save(commit=False)
+        data = self.cleaned_data
+        user.student.type = data['testType']
+        if commit:
+            user.student.save()
+            user.save()
+        return user
