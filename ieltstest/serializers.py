@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio
+from django.conf import settings
 
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
@@ -74,7 +75,7 @@ class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_audio(self, obj):
-        url = f'http://localhost:8000{obj.audio.url}'
+        url = f'{settings.BASE_URL}{obj.audio.url}'
         return url
 
 
@@ -105,13 +106,13 @@ class BookModuleSerializer(serializers.ModelSerializer):
 
     def get_tests(self, obj):
         module_slug = self.context.get('module_slug')
-        user = self.context.get('user')
+        test_type = self.context.get('test_type')
         if module_slug == 'listening':
             tests = obj.tests_with_listening_module
         elif module_slug == 'reading':
-            tests = obj.tests_with_reading_module(user)
+            tests = obj.tests_with_reading_module(test_type)
         elif module_slug == 'writing':
-            tests = obj.tests_with_writing_module(user)
+            tests = obj.tests_with_writing_module(test_type)
         elif module_slug == 'speaking':
             tests = obj.tests_with_speaking_module
 
@@ -121,7 +122,7 @@ class BookModuleSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_cover(self, obj):
-        return f'http://localhost:8000{obj.cover.url}'
+        return f'{settings.BASE_URL}{obj.cover.url}'
 
 
 class BookBasicSerializer(serializers.ModelSerializer):
@@ -179,7 +180,7 @@ class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
     audio = serializers.SerializerMethodField()
 
     def get_audio(self, obj):
-        url = f'http://localhost:8000{obj.audio.url}'
+        url = f'{settings.BASE_URL}{obj.audio.url}'
         return url
 
     class Meta:
@@ -194,7 +195,7 @@ class SpeakingAttemptSerializer(serializers.ModelSerializer):
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):
-        url = f'http://localhost:8000{obj.merged_audio.url}'
+        url = f'{settings.BASE_URL}{obj.merged_audio.url}'
         return url
 
     class Meta:
