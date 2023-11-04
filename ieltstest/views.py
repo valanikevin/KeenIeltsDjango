@@ -25,10 +25,17 @@ def get_books():
 
 @api_view(['GET'])
 def module_home(request, slug):
-    print(f'MODULE: {slug}')
     books = get_books()
+    student_test_type = request.user.student.type if request.user.is_authenticated else 'academic'
+    test_type = request.GET.get('testType', student_test_type)
+
+    if test_type and request.user.is_authenticated and request.user.student.type is not test_type:
+        student = request.user.student
+        student.type = test_type
+        student.save()
+
     serializer = BookModuleSerializer(
-        books, context={'module_slug': slug, 'user': request.user}, many=True)
+        books, context={'module_slug': slug, 'test_type': test_type}, many=True)
     return Response(serializer.data)
 
 
