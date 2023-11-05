@@ -10,7 +10,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 import json
 import time
 from custom_user.forms import UserCreationForm
-from custom_user.forms import AccountSettingForm
+from custom_user.forms import AccountSettingForm, PasswordChangeForm
 
 # Login Views
 
@@ -65,6 +65,43 @@ def update_account_settings(request):
 
     if form.is_valid():
         form.save()
-        return Response({'message': 'Settings updated successfully'}, status=200)
+        user = request.user
+        data = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'testType': user.student.type,
+            'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
+            'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
+            'message': 'Settings updated successfully',
+        }
+        return Response(data, status=200)
     else:
         return Response(form.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_account_password(request):
+    form = PasswordChangeForm(request.user, request.data)
+
+    if form.is_valid():
+        form.save()
+        return Response({'message': 'Password updated successfully'}, status=200)
+    else:
+        return Response(form.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_user_details(request):
+    user = request.user
+    data = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'testType': user.student.type,
+        'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
+        'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
+    }
+    return Response(data=data)
