@@ -570,6 +570,22 @@ class SpeakingAttemptAudio(models.Model):
         return self.audio_text
 
 
+class FullTestAttempt(IndividualModuleAttemptAbstract):
+    test = models.ForeignKey(
+        Test, on_delete=models.CASCADE, help_text='Select parent test')
+    listening_attempt = models.OneToOneField(
+        ListeningAttempt, on_delete=models.CASCADE, null=True, blank=True, help_text='Select listening attempt')
+    reading_attempt = models.OneToOneField(ReadingAttempt, on_delete=models.CASCADE, help_text='Select reading attempt',
+                                        null=True, blank=True)
+    writing_attempt = models.OneToOneField(WritingAttempt, on_delete=models.CASCADE, help_text='Select writing attempt',
+                                        null=True, blank=True)
+    speaking_attempt = models.OneToOneField(SpeakingAttempt, on_delete=models.CASCADE, help_text='Select speaking attempt',
+                                         null=True, blank=True)
+
+    def __str__(self):
+        return self.test.name
+
+
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
     sections = module.sections
