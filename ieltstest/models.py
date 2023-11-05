@@ -150,6 +150,24 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
         tests = self.tests.filter(speakingmodule__test__isnull=False)
         return tests
 
+    def tests_with_all_module(self, test_type):
+        if test_type:
+            tests = self.tests.filter(
+                listeningmodule__test__isnull=False,
+                readingmodule__test__isnull=False, readingmodule__test_type=test_type,
+                writingmodule__test__isnull=False, writingmodule__test_type=test_type,
+                speakingmodule__test__isnull=False
+            )
+        else:
+            tests = self.tests.filter(
+                listeningmodule__test__isnull=False,
+                readingmodule__test__isnull=False,
+                writingmodule__test__isnull=False,
+                speakingmodule__test__isnull=False
+            )
+
+        return tests
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(

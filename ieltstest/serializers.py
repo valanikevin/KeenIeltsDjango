@@ -115,6 +115,8 @@ class BookModuleSerializer(serializers.ModelSerializer):
             tests = obj.tests_with_writing_module(test_type)
         elif module_slug == 'speaking':
             tests = obj.tests_with_speaking_module
+        elif module_slug == 'fulltest':
+            tests = obj.tests_with_all_module(test_type)
 
         serializer = TestSerializer(
             tests, many=True)
