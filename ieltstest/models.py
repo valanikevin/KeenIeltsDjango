@@ -594,12 +594,12 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
             'speaking_attempt': self.speaking_attempt
         }
         for attempt in attempts.values():
-            if attempt and attempt.status not in ['Completed', 'Evaluated']:
+            if attempt and attempt.status == 'In Progress':
                 return attempt
         self.status = "Completed"
         self.save()
         return None
-    
+
 
 def update_form_fields_with_ids(module):
     from bs4 import BeautifulSoup
