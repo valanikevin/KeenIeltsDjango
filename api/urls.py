@@ -18,4 +18,5 @@ urlpatterns = [
     path('token/', user_views.MyTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('update_account_settings/', user_views.update_account_settings, name='update_account_settings')
 ]
