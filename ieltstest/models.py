@@ -582,8 +582,43 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
     speaking_attempt = models.OneToOneField(SpeakingAttempt, on_delete=models.CASCADE, help_text='Select speaking attempt',
                                             null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        return super(FullTestAttempt, self).save(*args, **kwargs)
+
     def __str__(self):
         return self.test.name
+
+    def create_empty_attempts(self, module_type, book_slug, specific_test=None):
+        from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
+        all_modules = [{'slug': 'listening', 'attempt_field': self.listening_attempt}, {'slug': 'reading', 'attempt_field': self.reading_attempt}, {
+            'slug': 'writing', 'attempt_field': self.writing_attempt}, {'slug': 'speaking', 'attempt_field': self.speaking_attempt}]
+
+        for module_type in all_modules:
+            IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+                module_type.slug)
+
+            IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+                module_type.slug)
+
+            modules = IndividualModule.objects.filter(
+                test__book__slug=book_slug)
+
+            specific_test = request.POST.get('specific_test')
+
+            if specific_test:
+                selected_module = modules.filter(test__slug=specific_test)
+            else:
+                # TODO: Filter test for user which he has never made attempt before.
+                selected_module = modules.order_by('?')
+
+            if selected_module.exists():
+                selected_module = selected_module.first()
+                attempt = IndividualModuleAttempt.objects.create(
+                    user=request.user, module=selected_module)
+                module_type.attempt_field = attempt
+        
+        self.save()
+        
 
     @property
     def next_module_attempt(self):
