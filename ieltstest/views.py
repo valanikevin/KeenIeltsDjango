@@ -3,7 +3,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection
+from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
 import re
@@ -182,3 +182,18 @@ def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
 
     return Response(attempt.get_evaluation())
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def find_smart_test_from_book_fulltest(request, book_slug):
+    book = Book.objects.get(slug=book_slug)
+
+    test = Test.objects.get(id=4)
+
+    fulltest_attempt = FullTestAttempt.objects.create(
+        user=request.user, test=test)
+
+    fulltest_attempt.create_empty_attempts(
+        book_slug=book.slug, user=request.user)
+    return Response({'book_slug': book_slug, 'attempt': fulltest_attempt.slug})
