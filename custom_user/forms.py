@@ -68,17 +68,21 @@ class UserCreationForm(forms.ModelForm):
 
 class AccountSettingForm(forms.ModelForm):
     testType = forms.ChoiceField(
-        choices=['academic', 'general'], required=True)
+        choices=[('academic', 'Academic'), ('general', 'General')],
+        required=True
+    )
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', )
+        fields = ('first_name', 'last_name')  # Do not include testType here
 
     def save(self, commit=True):
         user = super(AccountSettingForm, self).save(commit=False)
         data = self.cleaned_data
+        
         user.student.type = data['testType']
         if commit:
             user.student.save()
             user.save()
         return user
+
