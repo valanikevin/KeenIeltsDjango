@@ -589,18 +589,8 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
         return self.test.name
 
     def create_empty_attempts(self, book_slug, user, specific_test=None):
-        from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
-        all_modules = [{'slug': 'listening', 'attempt_field': self.listening_attempt}, {'slug': 'reading', 'attempt_field': self.reading_attempt}, {
-            'slug': 'writing', 'attempt_field': self.writing_attempt}, {'slug': 'speaking', 'attempt_field': self.speaking_attempt}]
-
-        for module_type in all_modules:
-            IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
-                module_type.get('slug'))
-
-            IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
-                module_type.get('slug'))
-
-            modules = IndividualModule.objects.filter(
+        if not self.listening_attempt:
+            modules = ListeningModule.objects.filter(
                 test__book__slug=book_slug)
 
             if specific_test:
@@ -611,9 +601,10 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
 
             if selected_module.exists():
                 selected_module = selected_module.first()
-                attempt = IndividualModuleAttempt.objects.create(
-                    user=user, module=selected_module)
-                module_type.attempt_field = attempt
+
+            attempt = ListeningAttempt.objects.create(
+                module=selected_module, user=user)
+            self.listening_attempt = attempt
 
         self.save()
 

@@ -190,10 +190,11 @@ def find_smart_test_from_book_fulltest(request, book_slug):
     book = Book.objects.get(slug=book_slug)
 
     test = Test.objects.get(id=4)
+    specific_test = request.POST.get('specific_test')
 
     fulltest_attempt = FullTestAttempt.objects.create(
         user=request.user, test=test)
-
+    
     fulltest_attempt.create_empty_attempts(
-        book_slug=book.slug, user=request.user)
+        book_slug=book.slug, user=request.user, specific_test=specific_test)
     return Response({'book_slug': book_slug, 'attempt': fulltest_attempt.slug})
