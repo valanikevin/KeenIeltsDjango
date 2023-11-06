@@ -2,7 +2,7 @@ from django.shortcuts import render
 from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from ieltstest.serializers import BookModuleSerializer
+from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerializer
 from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
@@ -198,3 +198,10 @@ def find_smart_test_from_book_fulltest(request, book_slug):
     fulltest_attempt.create_empty_attempts(
         book_slug=book.slug, user=request.user, specific_test=specific_test)
     return Response({'book_slug': book_slug, 'attempt': fulltest_attempt.slug})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_fulltest_info(request, attempt_slug):
+    attempt = FullTestAttempt.objects.get(slug=attempt_slug)
+    serializer = FullTestAttemptSerializer(attempt, many=False)
+    return Response(serializer.data)

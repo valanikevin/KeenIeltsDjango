@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt
 from django.conf import settings
 
 
@@ -238,3 +238,44 @@ class SpeakingModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ListeningAttemptBasic(serializers.ModelSerializer):
+
+    class Meta:
+        model = ListeningAttempt
+        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
+
+
+class ReadingAttemptBasic(serializers.ModelSerializer):
+
+    class Meta:
+        model = ReadingAttempt
+        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
+
+
+class WritingAttemptBasic(serializers.ModelSerializer):
+
+    class Meta:
+        model = WritingAttempt
+        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
+
+
+class SpeakingAttemptBasic(serializers.ModelSerializer):
+
+    class Meta:
+        model = SpeakingAttempt
+        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
+
+
+class FullTestAttemptSerializer(serializers.ModelSerializer):
+    test = TestWithBookSerializer(many=False, read_only=True)
+    listening_attempt = ListeningAttemptBasic(many=False, read_only=True)
+    reading_attempt = ReadingAttemptBasic(many=False, read_only=True)
+    writing_attempt = WritingAttemptBasic(many=False, read_only=True)
+    speaking_attempt = SpeakingAttemptBasic(many=False, read_only=True)
+    
+    class Meta:
+        model = FullTestAttempt
+        fields = '__all__'
+
+    def get_book(self, instance):
+        return BookBasicSerializer(instance.test.book, many=False).data

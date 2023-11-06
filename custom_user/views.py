@@ -105,3 +105,4 @@ def get_user_details(request):
         'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
     }
     return Response(data=data)
+
