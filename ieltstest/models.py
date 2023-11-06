@@ -589,22 +589,38 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
         return self.test.name
 
     def create_empty_attempts(self, book_slug, user, specific_test=None):
-        if not self.listening_attempt:
-            modules = ListeningModule.objects.filter(
-                test__book__slug=book_slug)
+        from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
+        all_modules = [
+            {'slug': 'listening', 'field': 'listening_attempt'},
+            {'slug': 'reading', 'field': 'reading_attempt'},
+            {'slug': 'writing', 'field': 'writing_attempt'},
+            {'slug': 'speaking', 'field': 'speaking_attempt'},
+        ]
 
-            if specific_test:
-                selected_module = modules.filter(test__slug=specific_test)
-            else:
-                # TODO: Filter test for user which he has never made attempt before.
-                selected_module = modules.order_by('?')
+        for _module in all_modules:
+            module_type = _module['slug']
+            field_name = _module['field']
+            IndividualModule, _ = get_individual_test_obj_serializer_from_slug(
+                module_type)
+            IndividualModuleAttempt, _ = get_module_attempt_from_slug(
+                module_type)
 
-            if selected_module.exists():
-                selected_module = selected_module.first()
+            if not getattr(self, field_name):
+                modules = IndividualModule.objects.filter(
+                    test__book__slug=book_slug)
 
-            attempt = ListeningAttempt.objects.create(
-                module=selected_module, user=user)
-            self.listening_attempt = attempt
+                if specific_test:
+                    selected_module = modules.filter(test__slug=specific_test)
+                else:
+                    # TODO: Filter test for user which he has never made attempt before.
+                    selected_module = modules.order_by('?')
+
+                if selected_module.exists():
+                    selected_module = selected_module.first()
+
+                attempt = IndividualModuleAttempt.objects.create(
+                    module=selected_module, user=user)
+                setattr(self, field_name, attempt)
 
         self.save()
 
