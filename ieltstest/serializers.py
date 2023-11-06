@@ -51,10 +51,14 @@ class SpeakingSectionSerializer(serializers.ModelSerializer):
 
 
 class BookSerializerBasic(serializers.ModelSerializer):
+    cover = serializers.SerializerMethodField()
 
     class Meta:
         model = Book
         fields = '__all__'
+
+    def get_cover(self, obj):
+        return f'{settings.BASE_URL}{obj.cover.url}'
 
 
 class TestWithBookSerializer(serializers.ModelSerializer):
@@ -238,32 +242,48 @@ class SpeakingModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ListeningAttemptBasic(serializers.ModelSerializer):
+AttemptBasicList = ['id', 'slug', 'status', 'created_at',
+                    'updated_at', 'bands', 'bands_description']
+
+
+class BaseAttemptSerializer(serializers.ModelSerializer):
+
+    bands_description = serializers.SerializerMethodField()
 
     class Meta:
+        abstract = True
+
+    def get_bands_description(self, instance):
+        return instance.bands_description
+
+    class Meta:
+        fields = AttemptBasicList + ['bands_description']
+
+
+class ListeningAttemptBasic(BaseAttemptSerializer):
+
+    class Meta(BaseAttemptSerializer.Meta):
         model = ListeningAttempt
-        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
 
 
-class ReadingAttemptBasic(serializers.ModelSerializer):
+class ReadingAttemptBasic(BaseAttemptSerializer):
 
-    class Meta:
+    class Meta(BaseAttemptSerializer.Meta):
         model = ReadingAttempt
-        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
 
 
-class WritingAttemptBasic(serializers.ModelSerializer):
+class WritingAttemptBasic(BaseAttemptSerializer):
 
-    class Meta:
+    class Meta(BaseAttemptSerializer.Meta):
         model = WritingAttempt
-        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
 
 
-class SpeakingAttemptBasic(serializers.ModelSerializer):
+class SpeakingAttemptBasic(BaseAttemptSerializer):
 
-    class Meta:
+    class Meta(BaseAttemptSerializer.Meta):
         model = SpeakingAttempt
-        fields = ['id', 'slug', 'status', 'created_at', 'updated_at']
+
+
 
 
 class FullTestAttemptSerializer(serializers.ModelSerializer):
@@ -272,7 +292,7 @@ class FullTestAttemptSerializer(serializers.ModelSerializer):
     reading_attempt = ReadingAttemptBasic(many=False, read_only=True)
     writing_attempt = WritingAttemptBasic(many=False, read_only=True)
     speaking_attempt = SpeakingAttemptBasic(many=False, read_only=True)
-    
+
     class Meta:
         model = FullTestAttempt
         fields = '__all__'

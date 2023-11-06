@@ -245,10 +245,7 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_listening_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_listening_bands_description.get(self.bands)
 
 
 class ReadingAttempt(IndividualModuleAttemptAbstract):
@@ -273,10 +270,7 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_reading_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_reading_bands_description.get(self.bands)
 
 
 class ReadingModule(IndividualModuleAbstract):
@@ -383,10 +377,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_writing_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_writing_bands_description.get(self.bands)
 
     def get_evaluation(self, section):
         if section.section == "Task 1" and self.evaluation:
@@ -474,10 +465,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_speaking_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_speaking_bands_description.get(self.bands)
 
     def get_evaluation(self):
 
@@ -905,6 +893,7 @@ def evalution_json(data):
 
 
 ielts_writing_bands_description = {
+    0.0: "You have no ability to use the language except for a few isolated words.",
     1.0: "You have no ability to use the language except for a few isolated words.",
     1.5: "You can understand and convey very basic information if it's repeated slowly and clearly.",
     2.0: "You have great difficulty understanding written English.",
@@ -926,6 +915,7 @@ ielts_writing_bands_description = {
 
 
 ielts_speaking_bands_description = {
+    0.0: "You can only use isolated words and cannot communicate meaningfully in English.",
     1.0: "You can only use isolated words and cannot communicate meaningfully in English.",
     1.5: "You can understand and convey very basic information if spoken slowly and clearly.",
     2.0: "You struggle significantly with understanding and expressing yourself in English.",
@@ -946,6 +936,7 @@ ielts_speaking_bands_description = {
 }
 
 ielts_listening_bands_description = {
+    0.0: "You find it extremely difficult to understand any spoken English.",
     1.0: "You find it extremely difficult to understand any spoken English.",
     1.5: "You can catch occasional words or phrases, but understanding spoken content is largely challenging.",
     2.0: "You struggle to grasp the main points of clear and slow speech, even in very familiar contexts.",
@@ -966,6 +957,7 @@ ielts_listening_bands_description = {
 }
 
 ielts_reading_bands_description = {
+    0.0: "You have extreme difficulty understanding written English.",
     1.0: "You have extreme difficulty understanding written English.",
     1.5: "You can identify very basic words or phrases, but grasping meaning from sentences or paragraphs is challenging.",
     2.0: "You can pick out familiar names and phrases but struggle to understand the main idea of the content.",
