@@ -620,9 +620,9 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
             'writing_attempt': self.writing_attempt,
             'speaking_attempt': self.speaking_attempt
         }
-        for attempt in attempts.values():
-            if attempt and attempt.status == 'In Progress':
-                return attempt
+        for attempt in attempts:
+            if attempt and attempts[attempt].status == 'In Progress':
+                return attempt.split('_')[0], attempts[attempt]
         self.status = "Completed"
         self.save()
         return None
