@@ -140,6 +140,8 @@ class BookBasicSerializer(serializers.ModelSerializer):
 class ListeningAttemptSerializer(serializers.ModelSerializer):
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
+    full_test_attempt_slug = serializers.SerializerMethodField()
+    full_test_next_attempt = serializers.SerializerMethodField()
 
     class Meta:
         model = ListeningAttempt
@@ -150,6 +152,20 @@ class ListeningAttemptSerializer(serializers.ModelSerializer):
 
     def get_bands_description(self, instance):
         return instance.bands_description
+
+    def get_full_test_attempt_slug(self, instance):
+        return instance.fulltestattempt.slug if instance.fulltestattempt else None
+
+    def get_full_test_next_attempt(self, instance):
+        from ieltstest.variables import get_module_attempt_from_slug
+        module_slug, attempt = instance.fulltestattempt.next_module_attempt
+
+        _, ModuleSerializer = get_module_attempt_from_slug(module_slug)
+        serializer = ModuleSerializer(attempt, many=False)
+        data = serializer.data
+        data['module_type'] = module_slug
+        data['module_slug'] = attempt.module.slug
+        return data
 
 
 class ReadingAttemptSerializer(serializers.ModelSerializer):
@@ -242,12 +258,12 @@ class SpeakingModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-AttemptBasicList = ['id', 'slug', 'status', 'created_at',
+AttemptBasicList = ['id', 'slug', 'module_slug', 'status', 'created_at',
                     'updated_at', 'bands', 'bands_description']
 
 
 class BaseAttemptSerializer(serializers.ModelSerializer):
-
+    module_slug = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
 
     class Meta:
@@ -255,6 +271,9 @@ class BaseAttemptSerializer(serializers.ModelSerializer):
 
     def get_bands_description(self, instance):
         return instance.bands_description
+
+    def get_module_slug(self, instance):
+        return instance.module.slug
 
     class Meta:
         fields = AttemptBasicList + ['bands_description']
@@ -282,8 +301,6 @@ class SpeakingAttemptBasic(BaseAttemptSerializer):
 
     class Meta(BaseAttemptSerializer.Meta):
         model = SpeakingAttempt
-
-
 
 
 class FullTestAttemptSerializer(serializers.ModelSerializer):
