@@ -74,12 +74,13 @@ class IndividualModuleSectionAbstract(models.Model):
 
 class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
     STATUS = (
+        ('Not Started', 'Not Started'),
         ('In Progress', 'In Progress'),
         ('Completed', 'Completed'),
         ('Evaluated', 'Evaluated')
     )
     status = models.CharField(
-        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+        choices=STATUS, help_text='What is currect status of this attempt?', default='Not Started')
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
     evaluation = models.JSONField(
@@ -621,8 +622,14 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
             'speaking_attempt': self.speaking_attempt
         }
         for attempt in attempts:
-            if attempt and attempts[attempt].status == 'In Progress':
-                return attempt.split('_')[0], attempts[attempt]
+            if attempt and attempts[attempt].status in ['In Progress', 'Not Started']:
+                _attempt = attempts[attempt]
+                module_type = attempt.split('_')[0]
+                return {
+                    'module_type': module_type,
+                    'attempt_slug': _attempt.slug,
+                    'module_slug': _attempt.module.slug
+                }
         self.status = "Completed"
         self.save()
         return None

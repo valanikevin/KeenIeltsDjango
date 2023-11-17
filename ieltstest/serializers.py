@@ -141,6 +141,8 @@ class AttemptSerializer(serializers.ModelSerializer):
 
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
+    full_test_attempt_slug = serializers.SerializerMethodField()
+    full_test_next_attempt = serializers.SerializerMethodField()
 
     class Meta:
         abstract = True
@@ -150,41 +152,35 @@ class AttemptSerializer(serializers.ModelSerializer):
 
     def get_bands_description(self, instance):
         return instance.bands_description
+    
+    def get_full_test_attempt_slug(self, instance):
+        return full_test_attempt_slug(instance)
+
+    def get_full_test_next_attempt(self, instance):
+        return full_test_next_attempt(instance)
 
 
 class ListeningAttemptSerializer(AttemptSerializer):
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
-    full_test_attempt_slug = serializers.SerializerMethodField()
-    full_test_next_attempt = serializers.SerializerMethodField()
 
     class Meta:
         model = ListeningAttempt
         fields = '__all__'
 
-    def get_full_test_attempt_slug(self, instance):
-        return full_test_attempt_slug(instance)
-
-    def get_full_test_next_attempt(self, instance):
-        return full_test_next_attempt(instance)
 
 
 class ReadingAttemptSerializer(AttemptSerializer):
-    full_test_attempt_slug = serializers.SerializerMethodField()
-    full_test_next_attempt = serializers.SerializerMethodField()
 
     class Meta:
         model = ReadingAttempt
         fields = '__all__'
 
-    def get_full_test_attempt_slug(self, instance):
-        return full_test_attempt_slug(instance)
-
-    def get_full_test_next_attempt(self, instance):
-        return full_test_next_attempt(instance)
 
 
 class WritingAttemptSerializer(AttemptSerializer):
+    full_test_attempt_slug = serializers.SerializerMethodField()
+    full_test_next_attempt = serializers.SerializerMethodField()
 
     class Meta:
         model = WritingAttempt
@@ -308,18 +304,6 @@ def full_test_attempt_slug(instance):
 
 
 def full_test_next_attempt(instance):
-    from ieltstest.variables import get_module_attempt_from_slug
 
     attempt_data = instance.fulltestattempt.next_module_attempt
-    if attempt_data:
-        module_slug, attempt = instance.fulltestattempt.next_module_attempt
-    else:
-        return None
-
-    _, ModuleSerializer = get_module_attempt_from_slug(module_slug)
-    serializer = ModuleSerializer(attempt, many=False)
-    data = serializer.data
-
-    data['module_type'] = module_slug
-    data['module_slug'] = attempt.module.slug
-    return data
+    return attempt_data
