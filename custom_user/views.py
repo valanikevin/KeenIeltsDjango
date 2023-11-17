@@ -10,9 +10,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 import json
 import time
 from custom_user.forms import UserCreationForm
-
+from custom_user.forms import AccountSettingForm, PasswordChangeForm
 
 # Login Views
+
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -21,7 +23,6 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Add custom claims
         token['email'] = user.email
         token['coachinginstitute_slug'] = user.student.institute.slug if user.student.institute else None
-        
 
         return token
 
@@ -55,3 +56,53 @@ def register_user(request):
         }
         status = 400
     return Response(status=status, data=data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_account_settings(request):
+    form = AccountSettingForm(request.data, instance=request.user)
+
+    if form.is_valid():
+        form.save()
+        user = request.user
+        data = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'testType': user.student.type,
+            'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
+            'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
+            'message': 'Settings updated successfully',
+        }
+        return Response(data, status=200)
+    else:
+        return Response(form.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_account_password(request):
+    form = PasswordChangeForm(request.user, request.data)
+
+    if form.is_valid():
+        form.save()
+        return Response({'message': 'Password updated successfully'}, status=200)
+    else:
+        return Response(form.errors, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_user_details(request):
+    user = request.user
+    data = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'testType': user.student.type,
+        'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
+        'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
+    }
+    return Response(data=data)
+

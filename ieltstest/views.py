@@ -2,8 +2,8 @@ from django.shortcuts import render
 from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from ieltstest.serializers import BookModuleSerializer
-from ieltstest.models import Book, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection
+from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerializer
+from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
 import re
@@ -25,10 +25,17 @@ def get_books():
 
 @api_view(['GET'])
 def module_home(request, slug):
-    print(f'MODULE: {slug}')
     books = get_books()
+    student_test_type = request.user.student.type if request.user.is_authenticated else 'academic'
+    test_type = request.GET.get('testType', student_test_type)
+
+    if test_type and request.user.is_authenticated and request.user.student.type is not test_type:
+        student = request.user.student
+        student.type = test_type
+        student.save()
+
     serializer = BookModuleSerializer(
-        books, context={'module_slug': slug, 'user': request.user}, many=True)
+        books, context={'module_slug': slug, 'test_type': test_type}, many=True)
     return Response(serializer.data)
 
 
@@ -175,3 +182,26 @@ def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
 
     return Response(attempt.get_evaluation())
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def find_smart_test_from_book_fulltest(request, book_slug):
+    book = Book.objects.get(slug=book_slug)
+
+    test = Test.objects.get(id=4)
+    specific_test = request.POST.get('specific_test')
+
+    fulltest_attempt = FullTestAttempt.objects.create(
+        user=request.user, test=test)
+    
+    fulltest_attempt.create_empty_attempts(
+        book_slug=book.slug, user=request.user, specific_test=specific_test)
+    return Response({'book_slug': book_slug, 'attempt': fulltest_attempt.slug})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_fulltest_info(request, attempt_slug):
+    attempt = FullTestAttempt.objects.get(slug=attempt_slug)
+    serializer = FullTestAttemptSerializer(attempt, many=False)
+    return Response(serializer.data)
