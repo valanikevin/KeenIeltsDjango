@@ -15,7 +15,7 @@ OPENAI_SECRET = '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'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-CSRF_TRUSTED_ORIGINS = ['https://keenielts.com/']
+CSRF_TRUSTED_ORIGINS = ['https://keenielts.com']
 
 ALLOWED_HOSTS = ["*"]
 BASE_URL = "http://192.168.10.55:8000"
