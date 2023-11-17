@@ -12,10 +12,5 @@ urlpatterns = [
     path('ieltstest/', include('ieltstest.urls')),
     path('leaderboard/', include('leaderboard.urls')),
     path('student/', include('student.urls')),
-
-    # Authentication / Login Views
-    path('register/', user_views.register_user),
-    path('token/', user_views.MyTokenObtainPairView.as_view(),
-         name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('account/', include('custom_user.urls')),
 ]

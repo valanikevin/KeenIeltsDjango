@@ -74,12 +74,13 @@ class IndividualModuleSectionAbstract(models.Model):
 
 class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
     STATUS = (
+        ('Not Started', 'Not Started'),
         ('In Progress', 'In Progress'),
         ('Completed', 'Completed'),
         ('Evaluated', 'Evaluated')
     )
     status = models.CharField(
-        choices=STATUS, help_text='What is currect status of this attempt?', default='In Progress')
+        choices=STATUS, help_text='What is currect status of this attempt?', default='Not Started')
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text='Select user for the attempt')
     evaluation = models.JSONField(
@@ -127,21 +128,19 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
         tests = self.tests.filter(listeningmodule__test__isnull=False)
         return tests
 
-    def tests_with_reading_module(self, user):
-        student_type = user.student.type if user.id else None
-        if student_type:
+    def tests_with_reading_module(self, test_type):
+        if test_type:
             tests = self.tests.filter(
-                readingmodule__test__isnull=False, readingmodule__test_type=student_type)
+                readingmodule__test__isnull=False, readingmodule__test_type=test_type)
         else:
             tests = self.tests.filter(readingmodule__test__isnull=False)
 
         return tests
 
-    def tests_with_writing_module(self, user):
-        student_type = user.student.type if user.id else None
-        if student_type:
+    def tests_with_writing_module(self, test_type):
+        if test_type:
             tests = self.tests.filter(
-                writingmodule__test__isnull=False, writingmodule__test_type=student_type)
+                writingmodule__test__isnull=False, writingmodule__test_type=test_type)
         else:
             tests = self.tests.filter(writingmodule__test__isnull=False)
 
@@ -150,6 +149,24 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     @property
     def tests_with_speaking_module(self):
         tests = self.tests.filter(speakingmodule__test__isnull=False)
+        return tests
+
+    def tests_with_all_module(self, test_type):
+        if test_type:
+            tests = self.tests.filter(
+                listeningmodule__test__isnull=False,
+                readingmodule__test__isnull=False, readingmodule__test_type=test_type,
+                writingmodule__test__isnull=False, writingmodule__test_type=test_type,
+                speakingmodule__test__isnull=False
+            )
+        else:
+            tests = self.tests.filter(
+                listeningmodule__test__isnull=False,
+                readingmodule__test__isnull=False,
+                writingmodule__test__isnull=False,
+                speakingmodule__test__isnull=False
+            )
+
         return tests
 
 
@@ -229,10 +246,7 @@ class ListeningAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_listening_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_listening_bands_description.get(self.bands)
 
 
 class ReadingAttempt(IndividualModuleAttemptAbstract):
@@ -257,10 +271,7 @@ class ReadingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_reading_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_reading_bands_description.get(self.bands)
 
 
 class ReadingModule(IndividualModuleAbstract):
@@ -367,10 +378,7 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_writing_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_writing_bands_description.get(self.bands)
 
     def get_evaluation(self, section):
         if section.section == "Task 1" and self.evaluation:
@@ -458,10 +466,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     @property
     def bands_description(self):
-        if self.bands:
-            return ielts_speaking_bands_description.get(self.bands)
-        else:
-            return None
+        return ielts_speaking_bands_description.get(self.bands)
 
     def get_evaluation(self):
 
@@ -552,6 +557,82 @@ class SpeakingAttemptAudio(models.Model):
             self.audio_text = result["text"]
             self.save()
         return self.audio_text
+
+
+class FullTestAttempt(IndividualModuleAttemptAbstract):
+    test = models.ForeignKey(
+        Test, on_delete=models.CASCADE, help_text='Select parent test')
+    listening_attempt = models.OneToOneField(
+        ListeningAttempt, on_delete=models.CASCADE, null=True, blank=True, help_text='Select listening attempt')
+    reading_attempt = models.OneToOneField(ReadingAttempt, on_delete=models.CASCADE, help_text='Select reading attempt',
+                                           null=True, blank=True)
+    writing_attempt = models.OneToOneField(WritingAttempt, on_delete=models.CASCADE, help_text='Select writing attempt',
+                                           null=True, blank=True)
+    speaking_attempt = models.OneToOneField(SpeakingAttempt, on_delete=models.CASCADE, help_text='Select speaking attempt',
+                                            null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        return super(FullTestAttempt, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.test.name
+
+    def create_empty_attempts(self, book_slug, user, specific_test=None):
+        from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
+        all_modules = [
+            {'slug': 'listening', 'field': 'listening_attempt'},
+            {'slug': 'reading', 'field': 'reading_attempt'},
+            {'slug': 'writing', 'field': 'writing_attempt'},
+            {'slug': 'speaking', 'field': 'speaking_attempt'},
+        ]
+
+        for _module in all_modules:
+            module_type = _module['slug']
+            field_name = _module['field']
+            IndividualModule, _ = get_individual_test_obj_serializer_from_slug(
+                module_type)
+            IndividualModuleAttempt, _ = get_module_attempt_from_slug(
+                module_type)
+
+            if not getattr(self, field_name):
+                modules = IndividualModule.objects.filter(
+                    test__book__slug=book_slug)
+
+                if specific_test:
+                    selected_module = modules.filter(test__slug=specific_test)
+                else:
+                    # TODO: Filter test for user which he has never made attempt before.
+                    selected_module = modules.order_by('?')
+
+                if selected_module.exists():
+                    selected_module = selected_module.first()
+
+                attempt = IndividualModuleAttempt.objects.create(
+                    module=selected_module, user=user)
+                setattr(self, field_name, attempt)
+
+        self.save()
+
+    @property
+    def next_module_attempt(self):
+        attempts = {
+            'listening_attempt': self.listening_attempt,
+            'reading_attempt': self.reading_attempt,
+            'writing_attempt': self.writing_attempt,
+            'speaking_attempt': self.speaking_attempt
+        }
+        for attempt in attempts:
+            if attempt and attempts[attempt].status in ['In Progress', 'Not Started']:
+                _attempt = attempts[attempt]
+                module_type = attempt.split('_')[0]
+                return {
+                    'module_type': module_type,
+                    'attempt_slug': _attempt.slug,
+                    'module_slug': _attempt.module.slug
+                }
+        self.status = "Completed"
+        self.save()
+        return None
 
 
 def update_form_fields_with_ids(module):
@@ -819,6 +900,7 @@ def evalution_json(data):
 
 
 ielts_writing_bands_description = {
+    0.0: "You have no ability to use the language except for a few isolated words.",
     1.0: "You have no ability to use the language except for a few isolated words.",
     1.5: "You can understand and convey very basic information if it's repeated slowly and clearly.",
     2.0: "You have great difficulty understanding written English.",
@@ -840,6 +922,7 @@ ielts_writing_bands_description = {
 
 
 ielts_speaking_bands_description = {
+    0.0: "You can only use isolated words and cannot communicate meaningfully in English.",
     1.0: "You can only use isolated words and cannot communicate meaningfully in English.",
     1.5: "You can understand and convey very basic information if spoken slowly and clearly.",
     2.0: "You struggle significantly with understanding and expressing yourself in English.",
@@ -860,6 +943,7 @@ ielts_speaking_bands_description = {
 }
 
 ielts_listening_bands_description = {
+    0.0: "You find it extremely difficult to understand any spoken English.",
     1.0: "You find it extremely difficult to understand any spoken English.",
     1.5: "You can catch occasional words or phrases, but understanding spoken content is largely challenging.",
     2.0: "You struggle to grasp the main points of clear and slow speech, even in very familiar contexts.",
@@ -880,6 +964,7 @@ ielts_listening_bands_description = {
 }
 
 ielts_reading_bands_description = {
+    0.0: "You have extreme difficulty understanding written English.",
     1.0: "You have extreme difficulty understanding written English.",
     1.5: "You can identify very basic words or phrases, but grasping meaning from sentences or paragraphs is challenging.",
     2.0: "You can pick out familiar names and phrases but struggle to understand the main idea of the content.",
