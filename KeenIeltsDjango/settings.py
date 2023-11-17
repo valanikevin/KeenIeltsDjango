@@ -16,7 +16,7 @@ OPENAI_SECRET = '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'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 BASE_URL = "http://192.168.10.55:8000"
 
 # Application definition
