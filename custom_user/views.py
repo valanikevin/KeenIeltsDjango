@@ -107,3 +107,18 @@ def get_user_details(request):
         'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
     }
     return Response(data=data)
+
+
+@api_view(['POST'])
+def verify_email(request):
+    data = json.loads(request.body)
+    email = data.get('email')
+    verification_code = data.get('verification_code')
+
+    user = Student.objects.get(email=email)
+    if user.verification_code == verification_code:
+        user.is_verified = True
+        user.save()
+        return Response({'message': 'Email verified successfully'}, status=200)
+    else:
+        return Response({'message': 'Invalid verification code'}, status=400)
