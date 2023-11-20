@@ -136,6 +136,13 @@ USE_L10N = True
 USE_TZ = True
 
 
+EMAIL_HOST = 'smtp.transmail.com'
+EMAIL_HOST_USER = 'emailapikey'
+EMAIL_HOST_PASSWORD = 'wSsVR60j/RXzX696zWelceo4mwxRBF/wEkR4iQaivSWpTfiTpsc4lxGbAFWgSfQYRWFuFTFGor59zEgE0TcMi9x/wwlVXiiF9mqRe1U4J3x17qnvhDzDW2lZlhOAJYsLxgxikmZnEc8k+g=='
+EMAIL_USE_SSL = True
+DEFAULT_FROM_EMAIL = 'notifications@zepto.keenielts.com'
+EMAIL_PORT = 465
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 

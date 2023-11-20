@@ -30,6 +30,7 @@ class UserAdmin(BaseUserAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
+                    "verification_code",
                     "is_verified",
                     "groups",
                     "user_permissions",
