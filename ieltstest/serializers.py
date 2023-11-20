@@ -152,7 +152,7 @@ class AttemptSerializer(serializers.ModelSerializer):
 
     def get_bands_description(self, instance):
         return instance.bands_description
-    
+
     def get_full_test_attempt_slug(self, instance):
         return full_test_attempt_slug(instance)
 
@@ -169,13 +169,11 @@ class ListeningAttemptSerializer(AttemptSerializer):
         fields = '__all__'
 
 
-
 class ReadingAttemptSerializer(AttemptSerializer):
 
     class Meta:
         model = ReadingAttempt
         fields = '__all__'
-
 
 
 class WritingAttemptSerializer(AttemptSerializer):
@@ -300,10 +298,19 @@ class FullTestAttemptSerializer(serializers.ModelSerializer):
 
 
 def full_test_attempt_slug(instance):
-    return instance.fulltestattempt.slug if instance.fulltestattempt else None
+    try:
+        item = instance.fulltestattempt.slug if instance.fulltestattempt else None
+    except Exception as e:
+        print(e)
+        item = None
+    return item
 
 
 def full_test_next_attempt(instance):
+    try:
+        attempt_data = instance.fulltestattempt.next_module_attempt if instance.fulltestattempt else None
+    except Exception as e:
+        print(e)
+        attempt_data = None
 
-    attempt_data = instance.fulltestattempt.next_module_attempt
     return attempt_data

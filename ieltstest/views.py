@@ -51,16 +51,43 @@ def find_smart_test_from_book(request, module_type, book_slug):
     modules = IndividualModule.objects.filter(
         test__book__slug=book_slug)
 
+    # Get the slugs of modules that the user has already attempted
+    attempted_module_slugs = IndividualModuleAttempt.objects.filter(
+        user=request.user,
+        module__test__book__slug=book_slug
+    ).values_list('module__slug', flat=True).distinct()
+
     specific_test = request.POST.get('specific_test')
 
     if specific_test:
         selected_module = modules.filter(test__slug=specific_test)
     else:
-        # TODO: Filter test for user which he has never made attempt before.
-        selected_module = modules.order_by('?')
+        # Exclude the modules that the user has already attempted
+        selected_module = modules.exclude(
+            slug__in=attempted_module_slugs).order_by('?')
+        if not selected_module.exists():
+            selected_module = modules.order_by('?')
 
     if selected_module.exists():
         selected_module = selected_module.first()
+        attempt = IndividualModuleAttempt.objects.create(
+            user=request.user, module=selected_module)
+    else:
+        return Response(status=500)
+    return Response({'module_type': module_type, 'selected_module': selected_module.slug, 'attempt': attempt.slug})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def find_smart_test_from_module(request, module_type):
+    IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
+        module_type)
+    IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+        module_type)
+    modules = IndividualModule.objects.order_by('?')
+
+    if modules.exists():
+        selected_module = modules.first()
         attempt = IndividualModuleAttempt.objects.create(
             user=request.user, module=selected_module)
     else:
@@ -189,15 +216,34 @@ def get_speaking_evaluation(request, attempt_slug):
 def find_smart_test_from_book_fulltest(request, book_slug):
     book = Book.objects.get(slug=book_slug)
 
-    test = Test.objects.get(id=4)
+    # Get the IDs of tests that the user has already attempted
+    attempted_test_ids = FullTestAttempt.objects.filter(
+        user=request.user,
+        test__book__slug=book_slug
+    ).values_list('test__id', flat=True).distinct()
+
     specific_test = request.POST.get('specific_test')
+
+    if specific_test:
+        test = Test.objects.filter(slug=specific_test).exclude(
+            id__in=attempted_test_ids).first()
+        if not test:
+            return Response(status=500)  # Or handle it differently
+    else:
+        # Exclude the tests that the user has already attempted
+        test = Test.objects.filter(book__slug=book_slug).exclude(
+            id__in=attempted_test_ids).order_by('?').first()
+        if not test:
+            test = Test.objects.filter(
+                book__slug=book_slug).order_by('?').first()
 
     fulltest_attempt = FullTestAttempt.objects.create(
         user=request.user, test=test)
-    
+
     fulltest_attempt.create_empty_attempts(
-        book_slug=book.slug, user=request.user, specific_test=specific_test)
+        book_slug=book_slug, user=request.user, specific_test=specific_test)
     return Response({'book_slug': book_slug, 'attempt': fulltest_attempt.slug})
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
