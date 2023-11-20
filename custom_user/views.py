@@ -36,7 +36,9 @@ def register_user(request):
     data = json.loads(request.body)
     form = UserCreationForm(data)
     if form.is_valid():
-        user = form.save()
+        user = form.save(commit=False)
+        user.generate_verification_code()
+        user.save()
 
         Student.objects.create(user=user)
 
@@ -105,4 +107,3 @@ def get_user_details(request):
         'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
     }
     return Response(data=data)
-
