@@ -11,10 +11,9 @@ class User(BaseUser):
         default=False, help_text='Is user email verified?')
 
     def save(self, *args, **kwargs):
-        self.generate_verification_code()
-        if not self.pk:  # Only generate verification code for new users
 
-            pass
+        if not self.pk:  # Only generate verification code for new users
+            self.generate_verification_code()
         super().save(*args, **kwargs)
 
     def generate_verification_code(self):
@@ -25,13 +24,11 @@ class User(BaseUser):
         return otp
 
     def send_verification_code_email(self, code):
-        print('Sending email')
         send_mail(
             subject='KeenIELTS Verification Code',
             message=f'Your verification code is {code}',
             from_email='KeenIELTS <notifications@zepto.keenielts.com>',
             recipient_list=[self.email, ],
-            fail_silently=False,
+            fail_silently=True,
         )
-
         return True
