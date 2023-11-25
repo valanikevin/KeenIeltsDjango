@@ -3,7 +3,7 @@ from custom_user.models import User
 from django.contrib.auth import password_validation
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-
+from decimal import Decimal
 import unicodedata
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -73,6 +73,8 @@ class AccountSettingForm(forms.ModelForm):
         required=True
     )
 
+    bandsTarget = forms.CharField(required=True, )
+
     class Meta:
         model = User
         fields = ('first_name', 'last_name')  # Do not include testType here
@@ -82,6 +84,7 @@ class AccountSettingForm(forms.ModelForm):
         data = self.cleaned_data
 
         user.student.type = data['testType']
+        user.student.bandsTarget = Decimal(data['bandsTarget'])
         if commit:
             user.student.save()
             user.save()

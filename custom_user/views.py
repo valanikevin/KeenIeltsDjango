@@ -9,15 +9,25 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 import json
 import time
+from django.contrib.auth import get_user_model
 from custom_user.forms import UserCreationForm
 from custom_user.forms import AccountSettingForm, PasswordChangeForm
+from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 
 # Login Views
+
+User = get_user_model()
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
+
+        # Check if the user's email is verified
+        if not user.is_verified:
+            raise AuthenticationFailed(
+                'Email is not verified. <a href="/verify/?send_email=True">Verify Email</a>')
+
         token = super().get_token(user)
 
         # Add custom claims
@@ -73,6 +83,7 @@ def update_account_settings(request):
             'last_name': user.last_name,
             'email': user.email,
             'testType': user.student.type,
+            'bandsTarget': user.student.bandsTarget,
             'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
             'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
             'message': 'Settings updated successfully',
@@ -103,6 +114,7 @@ def get_user_details(request):
         'last_name': user.last_name,
         'email': user.email,
         'testType': user.student.type,
+        'bandsTarget': user.student.bandsTarget,
         'coachinginstitute_slug': user.student.institute.slug if user.student.institute else None,
         'coachinginstitute_name': user.student.institute.name if user.student.institute else None,
     }
@@ -113,12 +125,22 @@ def get_user_details(request):
 def verify_email(request):
     data = json.loads(request.body)
     email = data.get('email')
-    verification_code = data.get('verification_code')
+    verification_code = data.get('otp')
 
-    user = Student.objects.get(email=email)
+    user = User.objects.get(email=email)
     if user.verification_code == verification_code:
         user.is_verified = True
         user.save()
         return Response({'message': 'Email verified successfully'}, status=200)
     else:
         return Response({'message': 'Invalid verification code'}, status=400)
+
+
+@api_view(['POST'])
+def send_verify_email(request):
+    data = json.loads(request.body)
+    email = data.get('email')
+    user = User.objects.get(email=email)
+    user.generate_verification_code()
+    user.save()
+    return Response({'message': 'Verification code sent successfully'}, status=200)
