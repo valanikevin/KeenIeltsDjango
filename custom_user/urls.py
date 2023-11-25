@@ -12,5 +12,7 @@ urlpatterns = [
     path('change_account_password/',
          user_views.change_account_password, name='change_password'),
     path('get_user_details/', user_views.get_user_details,),
-    path('verify/', user_views.verify_email, name='verify_email',),
+    path('send_verify_email/', user_views.send_verify_email,
+         name='send_verify_email',),
+    path('verify_email/', user_views.verify_email, name='verify_email',),
 ]
