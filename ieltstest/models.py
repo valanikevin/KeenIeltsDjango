@@ -826,7 +826,7 @@ def extract_between(text, start, end):
 
 
 def process_writing_content(text):
-    text = text.replace('\n', '</br>')
+    text = text.replace('\n', '<br />')
     return text
 
 
