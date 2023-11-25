@@ -61,7 +61,7 @@ class Student(SlugifiedBaseModal):
             recent_tests, key=lambda x: x['created_at'], reverse=True)
 
         # Limit the number of items to a maximum of 10
-        sorted_attempts = sorted_attempts[:10]
+        sorted_attempts = sorted_attempts[:15]
 
         return sorted_attempts
 
