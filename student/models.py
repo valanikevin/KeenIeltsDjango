@@ -1,8 +1,15 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from coachinginstitute.models import CoachingInstitute
-from KeenIeltsDjango.models import SlugifiedBaseModal
+from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel
 from datetime import datetime, timedelta
+from django.conf import settings
+import os
+from student.openai import dashboard_prompts
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain, SimpleSequentialChain
+from django.utils import timezone
 
 
 class Student(SlugifiedBaseModal):
@@ -22,6 +29,14 @@ class Student(SlugifiedBaseModal):
 
     def __str__(self):
         return self.user.email
+
+    @property
+    def overall_feedback(self):
+        if hasattr(self, 'overallperformancefeedback'):
+            return self.overallperformancefeedback.feedback
+        else:
+            OverallPerformanceFeedback.objects.create(student=self)
+            return self.overallperformancefeedback.feedback
 
     @property
     def average_score(self):
@@ -62,21 +77,27 @@ class Student(SlugifiedBaseModal):
         today = datetime.now().date()
 
         # Generate a list of the last fifteen dates
-        last_fifteen_dates = [today - timedelta(days=i) for i in range(14, -1, -1)]
+        last_fifteen_dates = [
+            today - timedelta(days=i) for i in range(14, -1, -1)]
 
         # Initialize chart data for each module and each date
         for module in modules:
-            IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(module)
-            chart_data[module] = {date.strftime("%B %-d, %Y"): {'average_bands': None, 'attempt_count': 0} for date in last_fifteen_dates}
+            IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+                module)
+            chart_data[module] = {date.strftime(
+                "%B %-d, %Y"): {'average_bands': 0, 'attempt_count': 0} for date in last_fifteen_dates}
 
             for date in last_fifteen_dates:
                 # Find average score of all attempts
                 module_attempts = IndividualModuleAttempt.objects.filter(
                     user=self.user, status="Evaluated", created_at__date=date)
                 if module_attempts.exists():
-                    average_bands = module_attempts.aggregate(models.Avg('bands'))['bands__avg']
-                    chart_data[module][date.strftime("%B %-d, %Y")]['average_bands'] = round_to_half(average_bands)
-                    chart_data[module][date.strftime("%B %-d, %Y")]['attempt_count'] = module_attempts.count()
+                    average_bands = module_attempts.aggregate(
+                        models.Avg('bands'))['bands__avg']
+                    chart_data[module][date.strftime(
+                        "%B %-d, %Y")]['average_bands'] = round_to_half(average_bands)
+                    chart_data[module][date.strftime(
+                        "%B %-d, %Y")]['attempt_count'] = module_attempts.count()
 
         # Add Overall Average Bands for the last fifteen days from chart_data of each module
         chart_data['overall'] = {}
@@ -91,9 +112,11 @@ class Student(SlugifiedBaseModal):
                     total_attempts += module_data['attempt_count']
                     module_count += 1
             if module_count > 0:
-                chart_data['overall'][date.strftime("%B %-d, %Y")] = {'average_bands': round_to_half(overall_average_bands/module_count), 'attempt_count': total_attempts}
+                chart_data['overall'][date.strftime("%B %-d, %Y")] = {'average_bands': round_to_half(
+                    overall_average_bands/module_count), 'attempt_count': total_attempts}
             else:
-                chart_data['overall'][date.strftime("%B %-d, %Y")] = {'average_bands': None, 'attempt_count': 0}
+                chart_data['overall'][date.strftime(
+                    "%B %-d, %Y")] = {'average_bands': 0.0, 'attempt_count': 0.0}
 
         # Prepare chart format with date labels and attempt counts
         chart_format = {
@@ -106,10 +129,10 @@ class Student(SlugifiedBaseModal):
             'average_bands': [data['average_bands'] for data in chart_data['overall'].values()],
             'attempt_count': [data['attempt_count'] for data in chart_data['overall'].values()]
         }
-        chart_format['dates'] = [date.strftime("%B %-d, %Y") for date in last_fifteen_dates]
+        chart_format['dates'] = [date.strftime(
+            "%B %-d, %Y") for date in last_fifteen_dates]
 
         return chart_format
-
 
 
 def round_to_half(number):
@@ -117,8 +140,61 @@ def round_to_half(number):
 
     # number should not be less than 1 and more than 9
     if rounded < 1:
-        return 1
+        rounded = 1
     elif rounded > 9:
-        return 9
-    else:
-        return rounded
+        rounded = 9
+
+    # Format the number to have one decimal point
+    return float(format(rounded, '.1f'))
+
+
+class OverallPerformanceFeedback(TimestampedBaseModel):
+    student = models.OneToOneField(
+        Student, on_delete=models.CASCADE, help_text='Select student for this feedback.')
+    raw_feedback = models.TextField(
+        help_text='Write your feedback for this student.', blank=True, null=True)
+
+    def __str__(self):
+        return self.student.user.email
+
+    @property
+    def feedback(self):
+        import json
+        _feedback = ""
+        if self.updated_at > timezone.now() - timedelta(days=1) and self.raw_feedback:
+            _feedback = self.raw_feedback
+        else:
+            _feedback = openai_overall_feedback(self.student)
+            self.raw_feedback = _feedback
+            self.save()
+
+        return process_openai_content(_feedback)
+
+
+def process_openai_content(text):
+    text = text.replace('\n', '<br />')
+    return text
+
+
+def openai_overall_feedback(student):
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    data = f"""
+Student Name: {student.user.first_name}
+Student Target: {student.bandsTarget}
+
+Overall Performance Data:
+{student.average_score}
+
+Last 15 Days Performance Data:
+{student.fifteen_days_chart}
+"""
+    prompt = PromptTemplate(
+        template=dashboard_prompts.overall_feedback_prompt, input_variables=[
+            "data"])
+
+    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
+                   temperature=0.6), prompt=prompt)
+
+    evaluation = llm.predict(data=data)
+    return evaluation
