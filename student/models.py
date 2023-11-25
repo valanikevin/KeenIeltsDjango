@@ -31,6 +31,41 @@ class Student(SlugifiedBaseModal):
         return self.user.email
 
     @property
+    def recent_tests(self):
+        from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
+
+        modules = ['reading', 'listening', 'writing', 'speaking']
+        recent_tests = []
+
+        for module in modules:
+            IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
+                module)
+
+            # Find top 5 attempts from each module
+            module_attempts = IndividualModuleAttempt.objects.filter(
+                user=self.user, status="Evaluated").order_by('-created_at')[:5]
+            if module_attempts.exists():
+                for attempt in module_attempts:
+                    recent_tests.append({
+                        'created_at': attempt.created_at,
+                        'module': module,
+                        'score': attempt.bands,
+                        'attempt_slug': attempt.slug,
+                        'module_slug': attempt.module.slug,
+                        'book_name': attempt.module.test.book.name,
+                        'test_name': attempt.module.test.name,
+                    })
+
+        # Sort all attempts by created_at
+        sorted_attempts = sorted(
+            recent_tests, key=lambda x: x['created_at'], reverse=True)
+
+        # Limit the number of items to a maximum of 10
+        sorted_attempts = sorted_attempts[:10]
+
+        return sorted_attempts
+
+    @property
     def overall_feedback(self):
         if hasattr(self, 'overallperformancefeedback'):
             return self.overallperformancefeedback.feedback
@@ -159,7 +194,6 @@ class OverallPerformanceFeedback(TimestampedBaseModel):
 
     @property
     def feedback(self):
-        import json
         _feedback = ""
         if self.updated_at > timezone.now() - timedelta(days=1) and self.raw_feedback:
             _feedback = self.raw_feedback

@@ -14,4 +14,6 @@ def overall_performance(request):
         'overall_feedback': student.overall_feedback,
         'average_score': student.average_score,
         'fifteen_days_chart': student.fifteen_days_chart,
+        'recent_tests': student.recent_tests,
+
     }, status=200)
