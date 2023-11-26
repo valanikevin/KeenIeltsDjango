@@ -2,6 +2,8 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+from config import *
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,11 +16,7 @@ SECRET_KEY = '@mu9#nsn6%ne@4gkxpv0z_jz^4f5e9&2(yan&4*gw1-hh4^#e+'
 OPENAI_SECRET = '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'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-CSRF_TRUSTED_ORIGINS = ['https://api.keenielts.com']
 
-ALLOWED_HOSTS = ["*"]
-BASE_URL = "http://192.168.10.55:8000"
 
 # Application definition
 
@@ -136,15 +134,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.zeptomail.com'  # SMTP server
-EMAIL_USE_TLS = True  # Use TLS
-EMAIL_PORT = 587  # SMTP port
-EMAIL_HOST_USER = 'emailapikey'  # Your SMTP username
-EMAIL_HOST_PASSWORD = 'wSsVR60j/RXzX696zWelceo4mwxRBF/wEkR4iQaivSWpTfiTpsc4lxGbAFWgSfQYRWFuFTFGor59zEgE0TcMi9x/wwlVXiiF9mqRe1U4J3x17qnvhDzDW2lZlhOAJYsLxgxikmZnEc8k+g=='  # Your SMTP password
-DEFAULT_FROM_EMAIL = 'zepto.keenielts.com'  # Default 'from' email address
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
@@ -204,7 +193,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 CKEDITOR_CONFIGS = {
     'default': {
