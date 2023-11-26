@@ -76,6 +76,7 @@ class Student(SlugifiedBaseModal):
     @property
     def average_score(self):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
+        from django.db.models import Avg, Count
 
         modules = ['reading', 'listening', 'writing', 'speaking']
         overall_scores = {}
@@ -83,21 +84,44 @@ class Student(SlugifiedBaseModal):
         for module in modules:
             IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
                 module)
-            # Find average score of all attempts
+
+            # Filter module attempts
             module_attempts = IndividualModuleAttempt.objects.filter(
                 user=self.user, status="Evaluated")
-            if module_attempts.exists():
-                average_bands = module_attempts.aggregate(
-                    models.Avg('bands'))['bands__avg']
-                overall_scores[module] = round_to_half(average_bands)
 
-        # Add overall average bands to overall_scores dict
-        overall_scores['overall'] = round_to_half(sum(
-            overall_scores.values())/len(overall_scores))
+            if module_attempts.exists():
+                # Aggregate average bands and count of attempts
+                aggregation_results = module_attempts.aggregate(
+                    average_bands=Avg('bands'),
+                    attempt_count=Count('id')
+                )
+                average_bands = aggregation_results['average_bands']
+                attempt_count = aggregation_results['attempt_count']
+
+                # Add average bands and attempt count to overall_scores
+                overall_scores[module] = {
+                    'average_bands': round_to_half(average_bands),
+                    'attempt_count': attempt_count
+                }
+
+        # Calculate overall average bands and total attempts
+        if overall_scores:
+            total_average = sum(d['average_bands']
+                                for d in overall_scores.values()) / len(overall_scores)
+            total_attempts = sum(d['attempt_count']
+                                 for d in overall_scores.values())
+
+            # Add overall scores to overall_scores dict
+            overall_scores['overall'] = {
+                'average_bands': round_to_half(total_average),
+                'total_attempts': total_attempts
+            }
 
         return overall_scores
 
+
 # Function to round off a number to the nearest 0.5
+
 
     @property
     def fifteen_days_chart(self):
@@ -165,7 +189,7 @@ class Student(SlugifiedBaseModal):
             'attempt_count': [data['attempt_count'] for data in chart_data['overall'].values()]
         }
         chart_format['dates'] = [date.strftime(
-            "%B %-d, %Y") for date in last_fifteen_dates]
+            "%b. %-d") for date in last_fifteen_dates]
 
         return chart_format
 
