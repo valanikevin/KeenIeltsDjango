@@ -79,7 +79,11 @@ class Student(SlugifiedBaseModal):
         from django.db.models import Avg, Count
 
         modules = ['reading', 'listening', 'writing', 'speaking']
-        overall_scores = {}
+        overall_scores = {module: {'average_bands': 0,
+                                   'attempt_count': 0} for module in modules}
+
+        # Initialize 'overall' key with default values
+        overall_scores['overall'] = {'average_bands': 0, 'total_attempts': 0}
 
         for module in modules:
             IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
@@ -98,24 +102,23 @@ class Student(SlugifiedBaseModal):
                 average_bands = aggregation_results['average_bands']
                 attempt_count = aggregation_results['attempt_count']
 
-                # Add average bands and attempt count to overall_scores
+                # Update average bands and attempt count
                 overall_scores[module] = {
                     'average_bands': round_to_half(average_bands),
                     'attempt_count': attempt_count
                 }
 
         # Calculate overall average bands and total attempts
-        if overall_scores:
-            total_average = sum(d['average_bands']
-                                for d in overall_scores.values()) / len(overall_scores)
-            total_attempts = sum(d['attempt_count']
-                                 for d in overall_scores.values())
+        total_average = sum(d['average_bands'] for d in overall_scores.values(
+        ) if 'average_bands' in d) / len(modules)
+        total_attempts = sum(d['attempt_count']
+                             for d in overall_scores.values() if 'attempt_count' in d)
 
-            # Add overall scores to overall_scores dict
-            overall_scores['overall'] = {
-                'average_bands': round_to_half(total_average),
-                'total_attempts': total_attempts
-            }
+        # Update overall scores
+        overall_scores['overall'] = {
+            'average_bands': round_to_half(total_average) if total_attempts > 0 else 0,
+            'total_attempts': total_attempts
+        }
 
         return overall_scores
 

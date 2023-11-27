@@ -10,6 +10,7 @@ def overall_performance(request):
     student = request.user.student
 
     total_tests = student.average_score["overall"]["total_attempts"]
+    print(student.average_score)
     if total_tests == 0:
         return Response({
             'overall_feedback_date': None,
