@@ -15,11 +15,14 @@ import os
 import json
 import time
 from langchain.llms import OpenAI
+from langchain.schema import HumanMessage
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SimpleSequentialChain
 from django.core.files.base import ContentFile
 from pydub import AudioSegment
 from io import BytesIO
+
 
 STATUS = (
     ('draft', 'Draft'),
@@ -845,13 +848,11 @@ Questions Asked: {question_list},
 Test Taker Audio Transcript: {audio.audio_to_text}\n\n
 """
 
-    prompt = PromptTemplate(template=speaking_prompts.speaking_evaluation_prompt, input_variables=[
-                            "data"])
+    prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
+    messages = [HumanMessage(content=prompt)]
+    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
 
-    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
-                   temperature=0.6), prompt=prompt)
-
-    evaluation = llm.predict(data=data)
+    evaluation = chat_model.invoke(messages).content
     return evaluation
 
 
@@ -881,12 +882,11 @@ def openai_get_writing_evaluation(attempt, section):
     if word_count < 70:
         return get_writing_empty_evaluation()
 
-    prompt = PromptTemplate(template=writing_prompts.writing_evaluation_prompt, input_variables=[
-                            "task", "question", "answer"])
-    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
-                   temperature=0.6), prompt=prompt, verbose=True)
-    evaluation = llm.predict(task=section.section,
-                             question=section.questions, answer=answer)
+    prompt = writing_prompts.writing_evaluation_prompt.format(
+        task=section.section, question=section.questions, answer=answer)
+    messages = [HumanMessage(content=prompt)]
+    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
+    evaluation = chat_model.invoke(messages).content
     return evaluation
 
 
