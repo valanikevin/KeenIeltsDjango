@@ -30,6 +30,11 @@ class Student(SlugifiedBaseModal):
     def __str__(self):
         return self.user.email
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            OverallPerformanceFeedback.objects.create(student=self)
+        super(Student, self).save(*args, **kwargs)
+
     @property
     def recent_tests(self):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
