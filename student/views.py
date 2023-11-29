@@ -7,11 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def overall_performance(request):
-    return Response({}, status=200)
     student = request.user.student
-
     total_tests = student.average_score["overall"]["total_attempts"]
-    print(student.average_score)
     if total_tests == 0:
         return Response({
             'overall_feedback_date': None,
@@ -20,12 +17,17 @@ def overall_performance(request):
             'fifteen_days_chart': None,
             'recent_tests': None,
         }, status=200)
+    try:
+        data = {
+            'overall_feedback_date': student.overallperformancefeedback.updated_at.strftime("%B %d, %Y") if student.overallperformancefeedback else None,
+            'overall_feedback': student.overall_feedback,
+            'average_score': student.average_score,
+            'fifteen_days_chart': student.fifteen_days_chart,
+            'recent_tests': student.recent_tests,
 
-    return Response({
-        'overall_feedback_date': student.overallperformancefeedback.updated_at.strftime("%B %d, %Y") if student.overallperformancefeedback else None,
-        'overall_feedback': student.overall_feedback,
-        'average_score': student.average_score,
-        'fifteen_days_chart': student.fifteen_days_chart,
-        'recent_tests': student.recent_tests,
-
-    }, status=200)
+        }
+    except Exception as e:
+        data = {
+            'exception': str(e)
+        }
+    return Response(data, status=200)
