@@ -31,9 +31,15 @@ class Student(SlugifiedBaseModal):
         return self.user.email
 
     def save(self, *args, **kwargs):
-        if self.pk is None:
-            OverallPerformanceFeedback.objects.create(student=self)
+        # Flag to determine if the student instance is new
+        is_new = self._state.adding
+
+        # First save the Student instance
         super(Student, self).save(*args, **kwargs)
+
+        # If this is a new instance, create OverallPerformanceFeedback
+        if is_new:
+            OverallPerformanceFeedback.objects.create(student=self)
 
     @property
     def recent_tests(self):
@@ -72,7 +78,11 @@ class Student(SlugifiedBaseModal):
 
     @property
     def overall_feedback(self):
-        self.overallperformancefeedback.feedback
+        if hasattr(self, 'overallperformancefeedback'):
+            return self.overallperformancefeedback.feedback
+        else:
+            OverallPerformanceFeedback.objects.create(student=self)
+            return self.overallperformancefeedback.feedback
 
     @property
     def average_score(self):
@@ -125,7 +135,6 @@ class Student(SlugifiedBaseModal):
 
 
 # Function to round off a number to the nearest 0.5
-
 
     @property
     def fifteen_days_chart(self):
