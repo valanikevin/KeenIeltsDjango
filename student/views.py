@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def overall_performance(request):
+    return Response({}, status=200)
     student = request.user.student
 
     total_tests = student.average_score["overall"]["total_attempts"]
