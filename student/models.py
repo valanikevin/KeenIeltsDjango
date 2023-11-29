@@ -8,8 +8,10 @@ import os
 from student.openai import dashboard_prompts
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain, SimpleSequentialChain
+from langchain.chains import LLMChain
 from django.utils import timezone
+from langchain.schema import HumanMessage, SystemMessage
+from langchain.chat_models import ChatOpenAI
 
 
 class Student(SlugifiedBaseModal):
@@ -260,12 +262,10 @@ Overall Performance Data:
 Last 15 Days Performance Data:
 {student.fifteen_days_chart}
 """
-    prompt = PromptTemplate(
-        template=dashboard_prompts.overall_feedback_prompt, input_variables=[
-            "data"])
+    prompt = dashboard_prompts.overall_feedback_prompt.format(data=data)
 
-    llm = LLMChain(llm=OpenAI(model_name="gpt-3.5-turbo-16k",
-                   temperature=0.6), prompt=prompt)
+    messages = [SystemMessage(content=prompt)]
+    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
+    evaluation = chat_model.invoke(messages).content
 
-    evaluation = llm.predict(data=data)
     return evaluation
