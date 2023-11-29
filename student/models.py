@@ -72,11 +72,7 @@ class Student(SlugifiedBaseModal):
 
     @property
     def overall_feedback(self):
-        if hasattr(self, 'overallperformancefeedback'):
-            return self.overallperformancefeedback.feedback
-        else:
-            OverallPerformanceFeedback.objects.create(student=self)
-            return self.overallperformancefeedback.feedback
+        self.overallperformancefeedback.feedback
 
     @property
     def average_score(self):
