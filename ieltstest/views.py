@@ -132,58 +132,56 @@ def update_attempt(request, module_type, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
-    # Get your models and serializers (this part is based on your existing code)
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
 
-    # Get the attempt object
     attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
 
-    timestamps = {}
+    timestamps = parse_post_data(request)
 
-    # Parsing other POST Data (excluding audio)
+    audios = save_audio_files(request, attempt, timestamps)
+
+    update_attempt_status(request, attempt)
+
+    attempt.merge_speaking_audio(audios)
+
+    data = {'status': attempt.status}
+    return Response(data=data)
+
+
+def parse_post_data(request):
+    timestamps = {}
     for key, value in request.POST.items():
         if key != 'attempt_type':
             main_key, nested_key = key.split(',')
-            main_key = int(main_key)
-            nested_key = int(nested_key)
+            timestamps.setdefault(int(main_key), {})[
+                int(nested_key)] = json.loads(value)
+    return timestamps
 
-            nested_value = json.loads(value)
 
-            if main_key not in timestamps:
-                timestamps[main_key] = {}
-
-            timestamps[main_key][nested_key] = nested_value
-
-    # Loop through each file and save it
+def save_audio_files(request, attempt, timestamps):
+    audios = []
     for section_id, audio_blob in request.FILES.items():
-        # I'm assuming section_id is the same as the 'key' you used in FormData
         section = SpeakingSection.objects.get(id=int(section_id))
-
-        # Create or update the audio for this section
         speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
             section=section,
             attempt=attempt,
             defaults={'timestamps': timestamps.get(int(section_id))}
         )
-
-        # Save the audio blob as a file
         speaking_audio.audio.save(
             f'{section_id}.mp3', ContentFile(audio_blob.read()))
 
+        speaking_audio.audio_to_text()
+        audios.append(speaking_audio)
+    return audios
+
+
+def update_attempt_status(request, attempt):
     attempt_type = request.POST.get('attempt_type')
     attempt.status = attempt_type
     attempt.save()
-
-    attempt.merge_speaking_audio()
-
-    data = {
-        'status': attempt.status,
-    }
-
-    return Response(data=data)
 
 
 @api_view(['POST'])

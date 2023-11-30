@@ -301,7 +301,6 @@ def full_test_attempt_slug(instance):
     try:
         item = instance.fulltestattempt.slug if instance.fulltestattempt else None
     except Exception as e:
-        print(e)
         item = None
     return item
 
@@ -310,7 +309,6 @@ def full_test_next_attempt(instance):
     try:
         attempt_data = instance.fulltestattempt.next_module_attempt if instance.fulltestattempt else None
     except Exception as e:
-        print(e)
         attempt_data = None
 
     return attempt_data
