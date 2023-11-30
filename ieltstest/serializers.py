@@ -202,7 +202,7 @@ class SpeakingAttemptSerializer(AttemptSerializer):
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):
-        url = f'{settings.BASE_URL}{obj.merged_audio.url}'
+        url = f'{settings.BASE_URL}{obj.merged_audio.url}' if obj.merged_audio else None
         return url
 
     class Meta:
