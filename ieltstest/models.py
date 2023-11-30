@@ -498,14 +498,16 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         return SpeakingAttemptAudio.objects.filter(
             attempt=self).order_by('section__section')
 
-    def merge_speaking_audio(self):
+    def merge_speaking_audio(self, audios=None):
         # Initialize an empty AudioSegment object
         merged_audio = AudioSegment.empty()
         audio_length = 0
         timestamp_secs = 0
         timestamps = {}
-        # Assuming 'audios' is a queryset
-        for audio in self.audios.all():
+        
+        audios = self.audios.all() if not audios else audios
+
+        for audio in audios:
             audio_segment = AudioSegment.from_file(audio.audio.path)
             for stamp in audio.timestamps:
                 timestamps[stamp] = timestamp_secs
@@ -517,6 +519,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
             # Concatenate audio
             merged_audio += audio_segment
+            
         self.merged_timestamps = timestamps
         # Create in-memory byte buffer
         buffer = BytesIO()
@@ -530,12 +533,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         buffer.close()  # Close the buffer
         self.save()
         return self
-
-
-@receiver(post_save, sender=SpeakingAttempt, dispatch_uid="speaking_merge_audio")
-def speaking_merge_audio(sender, instance, **kwargs):
-    if not instance.merged_audio:
-        instance.merge_speaking_audio()
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -555,6 +552,12 @@ class SpeakingAttemptAudio(models.Model):
 
     def audio_to_text(self):
         if not self.audio_text:
+            key_name = "whisper_model"
+            if cache.get(key_name):
+                model = cache.get(key_name)
+            else:
+                model = whisper.load_model("tiny")
+                cache.set(key_name, model, settings.CACHE_TTL)
             model = whisper.load_model("tiny")
             result = model.transcribe(self.audio.path)
             self.audio_text = result["text"]
