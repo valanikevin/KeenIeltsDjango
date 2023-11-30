@@ -12,7 +12,7 @@ from langchain.chains import LLMChain
 from django.utils import timezone
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models import ChatOpenAI
-
+from django.core.cache import cache
 
 class Student(SlugifiedBaseModal):
     TYPE = (
@@ -250,8 +250,16 @@ def process_openai_content(text):
 
 
 def openai_overall_feedback(student):
-    OPENAI_KEY = settings.OPENAI_SECRET
-    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    key_name = "openai_model_16k"
+    if cache.get(key_name):
+        chat_model = cache.get('openai_model_16k')
+    else:
+
+        OPENAI_KEY = settings.OPENAI_SECRET
+        os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+        chat_model = ChatOpenAI(
+            temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        cache.set(key_name, chat_model, settings.CACHE_TTL)
     data = f"""
 Student Name: {student.user.first_name}
 Student Target: {student.bandsTarget}
@@ -265,7 +273,6 @@ Last 15 Days Performance Data:
     prompt = dashboard_prompts.overall_feedback_prompt.format(data=data)
 
     messages = [SystemMessage(content=prompt)]
-    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
     evaluation = chat_model.invoke(messages).content
 
     return evaluation
