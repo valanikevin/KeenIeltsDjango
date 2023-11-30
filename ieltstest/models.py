@@ -19,7 +19,8 @@ from langchain.chat_models import ChatOpenAI
 from django.core.files.base import ContentFile
 from pydub import AudioSegment
 from io import BytesIO
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 STATUS = (
     ('draft', 'Draft'),
@@ -455,9 +456,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
 
-        if not self.merged_audio:
-            self = merge_speaking_audio(self)
-
         if evaluation:
             self.bands = evaluation.get('overall_band_score')
             self.status = "Evaluated"
@@ -499,7 +497,17 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
             attempt=self).order_by('section__section')
 
 
+@receiver(post_save, sender=SpeakingAttempt, dispatch_uid="speaking_merge_audio")
+def update_stock(sender, instance, **kwargs):
+    print('Merging Audio')
+    if not instance.merged_audio:
+
+        instance = merge_speaking_audio(instance)
+        instance.save()
+
+
 def merge_speaking_audio(instance):
+
     # Initialize an empty AudioSegment object
     merged_audio = AudioSegment.empty()
     audio_length = 0
@@ -518,7 +526,6 @@ def merge_speaking_audio(instance):
 
         # Concatenate audio
         merged_audio += audio_segment
-
     instance.merged_timestamps = timestamps
     # Create in-memory byte buffer
     buffer = BytesIO()
