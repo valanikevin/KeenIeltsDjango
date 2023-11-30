@@ -12,6 +12,7 @@ from tempfile import NamedTemporaryFile
 from ieltstest.openai import writing_prompts, speaking_prompts
 import whisper
 import os
+import pickle
 import json
 import time
 from langchain.schema import HumanMessage, SystemMessage
@@ -833,15 +834,10 @@ def process_writing_content(text):
 
 
 def openai_get_speaking_evaluation(attempt):
-    key_name = "openai_model_16k"
-    if cache.get(key_name):
-        chat_model = cache.get('openai_model_16k')
-    else:
-        OPENAI_KEY = settings.OPENAI_SECRET
-        os.environ["OPENAI_API_KEY"] = OPENAI_KEY
-        chat_model = ChatOpenAI(
-            temperature=0.6, model_name="gpt-3.5-turbo-16k")
-        cache.set(key_name, chat_model, settings.CACHE_TTL)
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    chat_model = ChatOpenAI(
+        temperature=0.6, model_name="gpt-3.5-turbo-16k")
 
     data = ""
     for audio in attempt.audios:
@@ -878,16 +874,10 @@ def get_writing_empty_evaluation():
 
 
 def openai_get_writing_evaluation(attempt, section):
-    key_name = "openai_model_16k"
-    if cache.get(key_name):
-        chat_model = cache.get('openai_model_16k')
-    else:
-
-        OPENAI_KEY = settings.OPENAI_SECRET
-        os.environ["OPENAI_API_KEY"] = OPENAI_KEY
-        chat_model = ChatOpenAI(
-            temperature=0.6, model_name="gpt-3.5-turbo-16k")
-        cache.set(key_name, chat_model, settings.CACHE_TTL)
+    OPENAI_KEY = settings.OPENAI_SECRET
+    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    chat_model = ChatOpenAI(
+        temperature=0.6, model_name="gpt-3.5-turbo-16k")
 
     answer = attempt.answers.get(str(section.id))
     word_count = len(answer.split())
