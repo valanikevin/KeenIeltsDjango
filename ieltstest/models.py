@@ -21,6 +21,7 @@ from pydub import AudioSegment
 from io import BytesIO
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.cache import cache
 
 STATUS = (
     ('draft', 'Draft'),
@@ -498,8 +499,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
 
 @receiver(post_save, sender=SpeakingAttempt, dispatch_uid="speaking_merge_audio")
-def update_stock(sender, instance, **kwargs):
-    print('Merging Audio')
+def speaking_merge_audio(sender, instance, **kwargs):
     if not instance.merged_audio:
 
         instance = merge_speaking_audio(instance)
@@ -838,8 +838,17 @@ def process_writing_content(text):
 
 
 def openai_get_speaking_evaluation(attempt):
-    OPENAI_KEY = settings.OPENAI_SECRET
-    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    key_name = "openai_model_16k"
+    if cache.get(key_name):
+        print("Using Cache")
+        chat_model = cache.get('openai_model_16k')
+    else:
+        print("Not Using Cache")
+        OPENAI_KEY = settings.OPENAI_SECRET
+        os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+        chat_model = ChatOpenAI(
+            temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        cache.set(key_name, chat_model, settings.CACHE_TTL)
 
     data = ""
     for audio in attempt.audios:
@@ -854,7 +863,6 @@ Test Taker Audio Transcript: {audio.audio_to_text}\n\n
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
     messages = [SystemMessage(content=prompt)]
-    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
 
     evaluation = chat_model.invoke(messages).content
     return evaluation
@@ -877,8 +885,16 @@ def get_writing_empty_evaluation():
 
 
 def openai_get_writing_evaluation(attempt, section):
-    OPENAI_KEY = settings.OPENAI_SECRET
-    os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+    key_name = "openai_model_16k"
+    if cache.get(key_name):
+        chat_model = cache.get('openai_model_16k')
+    else:
+
+        OPENAI_KEY = settings.OPENAI_SECRET
+        os.environ["OPENAI_API_KEY"] = OPENAI_KEY
+        chat_model = ChatOpenAI(
+            temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        cache.set(key_name, chat_model, settings.CACHE_TTL)
 
     answer = attempt.answers.get(str(section.id))
     word_count = len(answer.split())
@@ -889,7 +905,7 @@ def openai_get_writing_evaluation(attempt, section):
     prompt = writing_prompts.writing_evaluation_prompt.format(
         task=section.section, question=section.questions, answer=answer)
     messages = [SystemMessage(content=prompt)]
-    chat_model = ChatOpenAI(temperature=0.6, model_name="gpt-3.5-turbo-16k")
+
     evaluation = chat_model.invoke(messages).content
     return evaluation
 
