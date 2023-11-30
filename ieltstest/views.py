@@ -177,6 +177,8 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
     attempt.status = attempt_type
     attempt.save()
 
+    attempt.merge_speaking_audio()
+
     data = {
         'status': attempt.status,
     }
