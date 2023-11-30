@@ -497,48 +497,44 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         return SpeakingAttemptAudio.objects.filter(
             attempt=self).order_by('section__section')
 
+    def merge_speaking_audio(self):
+        # Initialize an empty AudioSegment object
+        merged_audio = AudioSegment.empty()
+        audio_length = 0
+        timestamp_secs = 0
+        timestamps = {}
+        # Assuming 'audios' is a queryset
+        for audio in self.audios.all():
+            audio_segment = AudioSegment.from_file(audio.audio.path)
+            for stamp in audio.timestamps:
+                timestamps[stamp] = timestamp_secs
+                timestamp_secs = timestamp_secs + \
+                    audio.timestamps.get(stamp).get('elapsedTime')
+            _audio_length = len(audio_segment) / 1000.0
+            audio_length = audio_length + _audio_length
+            timestamp_secs = audio_length
+
+            # Concatenate audio
+            merged_audio += audio_segment
+        self.merged_timestamps = timestamps
+        # Create in-memory byte buffer
+        buffer = BytesIO()
+        merged_audio.export(buffer, format='mp3')
+        buffer.seek(0)  # Rewind the buffer
+
+        # Create a Django ContentFile and save to the FileField
+        content_file = ContentFile(buffer.read(), 'merged_file.mp3')
+        self.merged_audio = content_file
+
+        buffer.close()  # Close the buffer
+        self.save()
+        return self
+
 
 @receiver(post_save, sender=SpeakingAttempt, dispatch_uid="speaking_merge_audio")
 def speaking_merge_audio(sender, instance, **kwargs):
     if not instance.merged_audio:
-
-        instance = merge_speaking_audio(instance)
-        instance.save()
-
-
-def merge_speaking_audio(instance):
-
-    # Initialize an empty AudioSegment object
-    merged_audio = AudioSegment.empty()
-    audio_length = 0
-    timestamp_secs = 0
-    timestamps = {}
-    # Assuming 'audios' is a queryset
-    for audio in instance.audios.all():
-        audio_segment = AudioSegment.from_file(audio.audio.path)
-        for stamp in audio.timestamps:
-            timestamps[stamp] = timestamp_secs
-            timestamp_secs = timestamp_secs + \
-                audio.timestamps.get(stamp).get('elapsedTime')
-        _audio_length = len(audio_segment) / 1000.0
-        audio_length = audio_length + _audio_length
-        timestamp_secs = audio_length
-
-        # Concatenate audio
-        merged_audio += audio_segment
-    instance.merged_timestamps = timestamps
-    # Create in-memory byte buffer
-    buffer = BytesIO()
-    merged_audio.export(buffer, format='mp3')
-    buffer.seek(0)  # Rewind the buffer
-
-    # Create a Django ContentFile and save to the FileField
-    content_file = ContentFile(buffer.read(), 'merged_file.mp3')
-    instance.merged_audio = content_file
-
-    buffer.close()  # Close the buffer
-
-    return instance
+        instance.merge_speaking_audio()
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -556,7 +552,6 @@ class SpeakingAttemptAudio(models.Model):
     def __str__(self):
         return self.attempt.slug
 
-    @property
     def audio_to_text(self):
         if not self.audio_text:
             model = whisper.load_model("tiny")
@@ -840,10 +835,8 @@ def process_writing_content(text):
 def openai_get_speaking_evaluation(attempt):
     key_name = "openai_model_16k"
     if cache.get(key_name):
-        print("Using Cache")
         chat_model = cache.get('openai_model_16k')
     else:
-        print("Not Using Cache")
         OPENAI_KEY = settings.OPENAI_SECRET
         os.environ["OPENAI_API_KEY"] = OPENAI_KEY
         chat_model = ChatOpenAI(
@@ -858,7 +851,7 @@ def openai_get_speaking_evaluation(attempt):
         data = data + f"""
 IELTS Speaking Part: {audio.section.section},
 Questions Asked: {question_list},
-Test Taker Audio Transcript: {audio.audio_to_text}\n\n
+Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
 """
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
