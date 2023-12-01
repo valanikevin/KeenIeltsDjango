@@ -33,7 +33,7 @@ def openai_generate_itinerary(data):
     Activities/Notes from Traveller: {data["tripRequirements"]}
 
     - Suggest traveller all the hidden and interesting places they should visit between the from city and destination cities. Your job is to make traveler trip very interesting and memorable.
-    - You should include at least 8-10 items in the itinerary.
+    - You should include itinerary item for each day.
     - Your response should include JSON list of arrays with these keys: city (string), activity (string, 50-100 words), date (string), special_attractions (string, 50-100 words).
     Sample Response:
     {{
