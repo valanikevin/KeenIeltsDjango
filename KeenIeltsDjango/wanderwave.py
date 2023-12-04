@@ -58,8 +58,9 @@ def generate_itinerary(request):
                 "special_attractions": "Take a scenic hike to the Bald Hills and enjoy panoramic views of the surrounding mountains and valleys. Visit the Jasper Planetarium and learn about the wonders of the night sky. Take a horse-drawn sleigh ride through the snow-covered landscapes. Explore the stunning landscapes of the Maligne Valley and hike to the Maligne Canyon."
             }
         ]}
-        i_response = sample_itinerary["error"] = str(e)
 
+        sample_itinerary["error"] = str(e)
+        i_response = sample_itinerary
     return Response(data=i_response, status=200)
 
 
@@ -67,7 +68,7 @@ def openai_generate_itinerary(data):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
     chat_model = ChatOpenAI(
-        temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        temperature=1.0, model_name="gpt-3.5-turbo-16k")
 
     ITINERARY_PROMPT = f"""
     You are a travel itinerary generator. You are given a list of cities and a list of activities. You must generate an itinerary for the traveler. The itinerary must include the cities and activities in the list. The itinerary must be in the order.
