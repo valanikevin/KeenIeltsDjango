@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt
 from django.conf import settings
+from KeenIeltsDjango.utils import imgix_url
 
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
@@ -58,7 +59,7 @@ class BookSerializerBasic(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_cover(self, obj):
-        return f'{settings.BASE_URL}{obj.cover.url}'
+        return f'{imgix_url(obj.cover.url)}'
 
 
 class TestWithBookSerializer(serializers.ModelSerializer):
@@ -79,7 +80,7 @@ class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_audio(self, obj):
-        url = f'{settings.BASE_URL}{obj.audio.url}'
+        url = f'{imgix_url(obj.audio.url)}'
         return url
 
 
@@ -128,7 +129,7 @@ class BookModuleSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_cover(self, obj):
-        return f'{settings.BASE_URL}{obj.cover.url}'
+        return f'{imgix_url(obj.cover.url)}'
 
 
 class BookBasicSerializer(serializers.ModelSerializer):
@@ -189,7 +190,7 @@ class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
     audio = serializers.SerializerMethodField()
 
     def get_audio(self, obj):
-        url = f'{settings.BASE_URL}{obj.audio.url}'
+        url = f'{imgix_url(obj.audio.url)}'
         return url
 
     class Meta:
@@ -202,7 +203,7 @@ class SpeakingAttemptSerializer(AttemptSerializer):
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):
-        url = f'{settings.BASE_URL}{obj.merged_audio.url}' if obj.merged_audio else None
+        url = f'{imgix_url(obj.merged_audio.url)}' if obj.merged_audio else None
         return url
 
     class Meta:
