@@ -441,7 +441,7 @@ class SpeakingSectionQuestion(WeightedBaseModel):
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     question = models.CharField(
         max_length=300, help_text='Add speaking section question.')
-    help_text = models.TextField(
+    help_text = RichTextUploadingField(
         help_text='Add helper text for this question', null=True, blank=True)
 
     def __str__(self):
@@ -504,7 +504,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         audio_length = 0
         timestamp_secs = 0
         timestamps = {}
-        
+
         audios = self.audios.all() if not audios else audios
 
         for audio in audios:
@@ -519,7 +519,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
             # Concatenate audio
             merged_audio += audio_segment
-            
+
         self.merged_timestamps = timestamps
         # Create in-memory byte buffer
         buffer = BytesIO()
