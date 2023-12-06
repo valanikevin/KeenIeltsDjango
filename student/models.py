@@ -183,7 +183,7 @@ class Student(SlugifiedBaseModal):
             module_count = 0
             for module in modules:
                 module_data = chart_data[module][date.strftime("%B %-d, %Y")]
-                if module_data['average_bands'] is not None:
+                if module_data['average_bands'] not in [None, 0]:
                     overall_average_bands += module_data['average_bands']
                     total_attempts += module_data['attempt_count']
                     module_count += 1
