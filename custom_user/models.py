@@ -47,10 +47,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         'current_user': reset_password_token.user,
         'username': reset_password_token.user.username,
         'email': reset_password_token.user.email,
-        'reset_password_url': "{}?token={}".format(
-            instance.request.build_absolute_uri(
-                reverse('password_reset:reset-password-confirm')),
-            reset_password_token.key)
+        'reset_password_url': f"https://keenielts.com/reset/confirm/?token={reset_password_token.key}&email={reset_password_token.user.email}"
     }
 
     message = f"""

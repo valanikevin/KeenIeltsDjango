@@ -255,7 +255,7 @@ def openai_overall_feedback(student):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
     chat_model = ChatOpenAI(
-        temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        temperature=1.0, model_name="gpt-3.5-turbo-16k")
 
     data = f"""
 Student Name: {student.user.first_name}
