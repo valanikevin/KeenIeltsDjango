@@ -23,7 +23,7 @@ def overall_performance(request):
             'overall_feedback': student.overall_feedback,
             'average_score': student.average_score,
             'fifteen_days_chart': student.fifteen_days_chart,
-            'recent_tests': student.recent_tests,
+            'recent_tests': student.attempts(),
 
         }
     except Exception as e:
@@ -31,3 +31,13 @@ def overall_performance(request):
             'exception': str(e)
         }
     return Response(data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_attempts_from_book(request, book_slug):
+    student = request.user.student
+    attempts = student.attempts(book_slug=book_slug)
+    
+    return Response(attempts, status=200)
+

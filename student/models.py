@@ -44,8 +44,7 @@ class Student(SlugifiedBaseModal):
         if is_new:
             OverallPerformanceFeedback.objects.create(student=self)
 
-    @property
-    def recent_tests(self):
+    def attempts(self, book_slug=None, limit=5):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 
         modules = ['reading', 'listening', 'writing', 'speaking']
@@ -57,7 +56,13 @@ class Student(SlugifiedBaseModal):
 
             # Find top 5 attempts from each module
             module_attempts = IndividualModuleAttempt.objects.filter(
-                user=self.user, status="Evaluated").order_by('-created_at')[:5]
+                user=self.user, status="Evaluated").order_by('-created_at')
+            if book_slug:
+                module_attempts = module_attempts.filter(
+                    module__test__book__slug=book_slug)
+
+            module_attempts = module_attempts[:limit]
+
             if module_attempts.exists():
                 for attempt in module_attempts:
                     recent_tests.append({
@@ -68,6 +73,7 @@ class Student(SlugifiedBaseModal):
                         'module_slug': attempt.module.slug,
                         'book_name': attempt.module.test.book.name,
                         'test_name': attempt.module.test.name,
+                        'book_slug': attempt.module.test.book.slug,
                     })
 
         # Sort all attempts by created_at

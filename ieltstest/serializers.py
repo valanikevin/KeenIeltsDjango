@@ -126,11 +126,15 @@ class TestSerializer(serializers.ModelSerializer):
 
 class GetBookSerializer(serializers.ModelSerializer):
     tests = TestSerializer(many=True, read_only=True)
+    cover = serializers.SerializerMethodField()
 
     class Meta:
         model = Book
         fields = ['created_at', 'slug', 'name', 'description', 'difficulty', 'cover',
                   'website', 'copyright', 'tests']
+
+    def get_cover(self, obj):
+        return f'{imgix_url(obj.cover.url)}'
 
 
 class BookModuleSerializer(serializers.ModelSerializer):
