@@ -2,7 +2,7 @@ from django.shortcuts import render
 from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerializer
+from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerializer, GetBookSerializer
 from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
@@ -16,6 +16,14 @@ from django.core.files.base import ContentFile
 
 def ieltstest(request):
     pass
+
+
+@api_view(['GET'])
+def get_book(request, book_slug):
+    book = Book.objects.get(slug=book_slug)
+    serializer = GetBookSerializer(book, many=False)
+    
+    return Response(serializer.data)
 
 
 def get_books():

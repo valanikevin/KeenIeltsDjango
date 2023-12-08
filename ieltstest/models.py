@@ -188,6 +188,18 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
     def listening_module(self):
         return ListeningModule.objects.filter(test=self)
 
+    @property
+    def reading_module(self):
+        return ReadingModule.objects.filter(test=self)
+
+    @property
+    def writing_module(self):
+        return WritingModule.objects.filter(test=self)
+
+    @property
+    def speaking_module(self):
+        return SpeakingModule.objects.filter(test=self)
+
 
 class ListeningModule(IndividualModuleAbstract):
     total_questions = models.PositiveIntegerField(

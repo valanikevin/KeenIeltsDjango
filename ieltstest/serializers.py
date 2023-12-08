@@ -91,13 +91,46 @@ class ListeningModuleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ReadingModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ReadingModule
+        fields = '__all__'
+
+
+class WritingModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = WritingModule
+        fields = '__all__'
+
+
+class SpeakingModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SpeakingModule
+        fields = '__all__'
+
+
 class TestSerializer(serializers.ModelSerializer):
     listening_module = ListeningModuleSerializer(
         many=True, read_only=True)
+    reading_module = ReadingModuleSerializer(many=True, read_only=True)
+    writing_module = WritingModuleSerializer(many=True, read_only=True)
+    speaking_module = SpeakingModuleSerializer(many=True, read_only=True)
 
     class Meta:
         model = Test
         fields = '__all__'
+
+
+class GetBookSerializer(serializers.ModelSerializer):
+    tests = TestSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Book
+        fields = ['created_at', 'slug', 'name', 'description', 'difficulty', 'cover',
+                  'website', 'copyright', 'tests']
 
 
 class BookModuleSerializer(serializers.ModelSerializer):

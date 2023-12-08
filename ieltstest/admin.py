@@ -1,8 +1,8 @@
 from django.contrib import admin
 from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection, SpeakingSectionQuestion, SpeakingAttemptAudio, FullTestAttempt
 
-# Inlines
 
+# Inlines
 
 class TestInline(admin.StackedInline):
     model = Test
@@ -76,6 +76,7 @@ class BookAdmin(admin.ModelAdmin):
     search_fields = ['name']
     inlines = [TestInline,]
     exclude = ['created_at', 'updated_at']
+    readonly_fields = ['slug']
 
 
 class TestAdmin(admin.ModelAdmin):
