@@ -13,6 +13,7 @@ from django.utils import timezone
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models import ChatOpenAI
 from django.core.cache import cache
+from decimal import Decimal
 
 
 class Student(SlugifiedBaseModal):
@@ -233,6 +234,8 @@ def round_to_half(number):
 class OverallPerformanceFeedback(TimestampedBaseModel):
     student = models.OneToOneField(
         Student, on_delete=models.CASCADE, help_text='Select student for this feedback.')
+    total_attempts = models.DecimalField(
+        help_text='How many attempts did this user had in total for this feedback?', decimal_places=1, max_digits=5, default=0.0)
     raw_feedback = models.TextField(
         help_text='Write your feedback for this student.', blank=True, null=True)
 
@@ -242,11 +245,14 @@ class OverallPerformanceFeedback(TimestampedBaseModel):
     @property
     def feedback(self):
         _feedback = ""
-        if self.updated_at > timezone.now() - timedelta(days=1) and self.raw_feedback:
+        total_attempts = Decimal(self.student.average_score['overall']['total_attempts'])
+        
+        if self.raw_feedback and (total_attempts == self.total_attempts or self.updated_at > timezone.now() - timedelta(days=1)):
             _feedback = self.raw_feedback
         else:
             _feedback = openai_overall_feedback(self.student)
             self.raw_feedback = _feedback
+            self.total_attempts = total_attempts
             self.save()
 
         return process_openai_content(_feedback)

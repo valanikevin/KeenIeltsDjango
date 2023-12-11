@@ -1,7 +1,13 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt, CoachingInstitute
 from django.conf import settings
 from KeenIeltsDjango.utils import imgix_url
+
+
+class CoachingInstituteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CoachingInstitute
+        fields = '__all__'
 
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
@@ -127,11 +133,12 @@ class TestSerializer(serializers.ModelSerializer):
 class GetBookSerializer(serializers.ModelSerializer):
     tests = TestSerializer(many=True, read_only=True)
     cover = serializers.SerializerMethodField()
+    institute = CoachingInstituteSerializer(many=False, read_only=True)
 
     class Meta:
         model = Book
         fields = ['created_at', 'slug', 'name', 'description', 'difficulty', 'cover',
-                  'website', 'copyright', 'tests']
+                  'website', 'copyright', 'tests', 'institute']
 
     def get_cover(self, obj):
         return f'{imgix_url(obj.cover.url)}'
