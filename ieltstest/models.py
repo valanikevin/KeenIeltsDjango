@@ -105,6 +105,8 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
         ('intermediate', 'Intermediate'),
         ('advanced', 'Advanced'),
     )
+    status = models.CharField(
+        max_length=50, choices=STATUS, default='in-progress')
     name = models.CharField(
         max_length=200, help_text='What is name of the book?')
     description = models.TextField(help_text="Add small book description.")

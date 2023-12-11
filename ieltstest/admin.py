@@ -77,6 +77,7 @@ class BookAdmin(admin.ModelAdmin):
     inlines = [TestInline,]
     exclude = ['created_at', 'updated_at']
     readonly_fields = ['slug']
+    list_display = ['name', 'copyright', 'slug', 'status', ]
 
 
 class TestAdmin(admin.ModelAdmin):
@@ -84,24 +85,53 @@ class TestAdmin(admin.ModelAdmin):
     inlines = [ListeningModuleInline, ReadingModuleInline,
                WritingModuleInline, SpeakingModuleInline]
     exclude = ['created_at', 'updated_at']
+    list_display = ['name', 'book', 'status', 'slug', ]
 
 
 class ModuleAdmin(admin.ModelAdmin):
     search_fields = ['name']
     exclude = ['created_at', 'updated_at']
-    list_display = ['name', 'slug']
+    list_display = ["name", 'status', "test", "book_name", 'slug', ]
 
     class Meta:
         abstract = True
+
+    def book_name(self, obj):
+        return obj.test.book.name
 
 
 class SectionAdmin(admin.ModelAdmin):
-    search_fields = ['test']
-    exclude = ['created_at', 'updated_at', ]
-    list_display = ['name']
+
+    exclude = ['created_at', 'updated_at']
+
+    def get_list_display(self, request):
+        # Define common fields for list_display here
+        return []
 
     class Meta:
         abstract = True
+
+
+class ListeningSectionAdmin(SectionAdmin):
+    readonly_fields = ['total_questions']
+
+    def get_list_display(self, request):
+        # Include base class list_display and add custom fields
+        return super(ListeningSectionAdmin, self).get_list_display(request) + ['name', 'total_questions', 'listening_module', 'book_name']
+
+    def book_name(self, obj):
+        return obj.listening_module.test.book.name
+
+
+class ReadingSectionAdmin(SectionAdmin):
+    readonly_fields = ['total_questions']
+
+    def get_list_display(self, request):
+        # Include base class list_display and add custom fields
+        return super(ReadingSectionAdmin, self).get_list_display(request) + ['name', 'total_questions', 'reading_module', 'book_name']
+
+    def book_name(self, obj):
+        return obj.reading_module.test.book.name
 
 
 class SpeakingSectionAdmin(SectionAdmin):
@@ -112,10 +142,16 @@ class ListeningModuleAdmin(ModuleAdmin):
     readonly_fields = ['total_questions']
     inlines = [ListeningSectionInline]
 
+    def get_list_display(self, request):
+        return super(ListeningModuleAdmin, self).get_list_display(request) + ['total_questions']
+
 
 class ReadingModuleAdmin(ModuleAdmin):
     readonly_fields = ['total_questions']
     inlines = [ReadingSectionInline]
+
+    def get_list_display(self, request):
+        return super(ReadingModuleAdmin, self).get_list_display(request) + ['total_questions']
 
 
 class WritingModuleAdmin(ModuleAdmin):
@@ -126,24 +162,33 @@ class SpeakingModuleAdmin(ModuleAdmin):
     inlines = [SpeakingSectionInline]
 
 
-class ListeningAttemptAdmin(admin.ModelAdmin):
-    list_display = ['user', 'slug', 'status', 'bands']
+class AttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'book_name', 'module', 'slug', 'status', 'bands']
+
+    class Meta:
+        abstract = True
+
+    def book_name(self, obj):
+        return obj.module.test.book.name
 
 
-class ReadingAttemptAdmin(admin.ModelAdmin):
-    list_display = ['user', 'slug', 'status', 'bands']
+class ListeningAttemptAdmin(AttemptAdmin):
+    pass
 
 
-class WritingAttemptAdmin(admin.ModelAdmin):
-    list_display = ['user', 'slug', 'status', 'bands']
+class ReadingAttemptAdmin(AttemptAdmin):
+    pass
 
 
-class SpeakingAttemptAdmin(admin.ModelAdmin):
-    list_display = ['user', 'slug', 'status', 'bands']
+class WritingAttemptAdmin(AttemptAdmin):
+    pass
+
+
+class SpeakingAttemptAdmin(AttemptAdmin):
     inlines = [SpeakingAttemptAudioInline,]
 
 
-class FullTestAttemptAdmin(admin.ModelAdmin):
+class FullTestAttemptAdmin(AttemptAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
 
 
@@ -153,12 +198,12 @@ admin.site.register(Book, BookAdmin)
 # Listening
 admin.site.register(ListeningAttempt, ListeningAttemptAdmin)
 admin.site.register(QuestionType)
-admin.site.register(ListeningSection, SectionAdmin)
+admin.site.register(ListeningSection, ListeningSectionAdmin)
 admin.site.register(ListeningModule, ListeningModuleAdmin)
 
 # Reading
 admin.site.register(ReadingModule, ReadingModuleAdmin)
-admin.site.register(ReadingSection, SectionAdmin)
+admin.site.register(ReadingSection, ReadingSectionAdmin)
 admin.site.register(ReadingAttempt, ReadingAttemptAdmin)
 
 # Writing
