@@ -208,7 +208,7 @@ class ListeningModule(IndividualModuleAbstract):
         help_text='How many questions are there in this module?', default=0)
 
     audio = models.FileField(
-        help_text='Add Audio file, all section merged in one audio')
+        help_text='Add Audio file, all section merged in one audio', null=True, blank=True)
 
     def __str__(self):
         return self.test.name if self.test else ""
@@ -233,8 +233,6 @@ class QuestionType(models.Model):
 class ListeningSection(IndividualModuleSectionAbstract):
     total_questions = models.PositiveIntegerField(
         help_text='How many questions are there in this section?', default=0)
-    question_type = models.ForeignKey(
-        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     listening_module = models.ForeignKey(
         ListeningModule, on_delete=models.CASCADE, help_text='Select Parent Test for this section')
     audio_start_time = models.DecimalField(
@@ -310,8 +308,6 @@ class ReadingModule(IndividualModuleAbstract):
 class ReadingSection(IndividualModuleSectionAbstract):
     total_questions = models.PositiveIntegerField(
         help_text='How many questions are there in this section?', default=0)
-    question_type = models.ForeignKey(
-        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     reading_module = models.ForeignKey(
         ReadingModule, on_delete=models.CASCADE, help_text='Select parent reading module')
     passage = RichTextUploadingField(
@@ -341,8 +337,6 @@ class WritingSection(IndividualModuleSectionAbstract):
     )
     section = models.CharField(
         choices=SECTION, help_text='What is section type?')
-    question_type = models.ForeignKey(
-        QuestionType, on_delete=models.CASCADE, help_text='Choose question type for this section', null=True)
     writing_module = models.ForeignKey(
         WritingModule, on_delete=models.CASCADE, help_text='Select parent writing module')
     task = RichTextUploadingField(
@@ -734,7 +728,6 @@ def check_answers(attempt):
         section_evaluation['incorrect'] = section_incorrect
         section_evaluation['total_questions'] = section_correct + \
             section_incorrect
-        section_evaluation['question_type'] = section.question_type.name
         sections.append(section_evaluation)
 
         # Update best and worst scored sections if needed
