@@ -26,6 +26,7 @@ from django.core.cache import cache
 
 STATUS = (
     ('draft', 'Draft'),
+    ('modules-created', 'Modules Created'),
     ('in-progress', 'In Progress'),
     ('error-check', 'Perform Error Check'),
     ('error-found', 'Error Found'),
@@ -174,6 +175,13 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
         return tests
 
+    def create_empty_tests(self, no_of_practice_test=4, module_type='academic'):
+        for i in range(no_of_practice_test):
+            test = Test.objects.create(
+                book=self, name=f'Practice Test {i+1}', status="modules-created")
+            test.create_empty_modules(i+1, module_type=module_type)
+            print(f"T: {test.name} | ID: {test.id} | Book: {test.book.name}")
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -201,6 +209,18 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
     @property
     def speaking_module(self):
         return SpeakingModule.objects.filter(test=self)
+
+    def create_empty_modules(self, test_no, module_type='academic'):
+        ListeningModule.objects.create(
+            test=self, name=f'Listening Test {test_no}', test_type="both", status="modules-created")
+        ReadingModule.objects.create(
+            test=self, name=f'Reading Test {test_no}', test_type=module_type, status="modules-created")
+        WritingModule.objects.create(
+            test=self, name=f'Writing Test {test_no}', test_type=module_type, status="modules-created")
+        SpeakingModule.objects.create(
+            test=self, name=f'Speaking Test {test_no}', test_type="both", status="modules-created")
+
+        return True
 
 
 class ListeningModule(IndividualModuleAbstract):
