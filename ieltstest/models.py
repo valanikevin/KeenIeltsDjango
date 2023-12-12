@@ -28,6 +28,7 @@ STATUS = (
     ('draft', 'Draft'),
     ('modules-created', 'Modules Created'),
     ('stage-1', 'Stage 1 Completed'),
+    ('stage-2', 'Stage 2 Completed'),
     ('error-check', 'Perform Error Check'),
     ('error-found', 'Error Found'),
     ('in-progress', 'In Progress'),
