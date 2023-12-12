@@ -27,9 +27,10 @@ from django.core.cache import cache
 STATUS = (
     ('draft', 'Draft'),
     ('modules-created', 'Modules Created'),
-    ('in-progress', 'In Progress'),
+    ('stage-1', 'Stage 1 Completed'),
     ('error-check', 'Perform Error Check'),
     ('error-found', 'Error Found'),
+    ('in-progress', 'In Progress'),
     ('published', 'Published'),
     ('discard', 'Discard')
 )
