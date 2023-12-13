@@ -56,6 +56,9 @@ class IndividualModuleAbstract(SlugifiedBaseModal):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return f'{self.name} - {self.test.book.name}'
+
 
 class IndividualModuleSectionAbstract(models.Model):
     SECTION = (
@@ -241,6 +244,9 @@ class ListeningModule(IndividualModuleAbstract):
         update_form_fields_with_ids(self)
         super(ListeningModule, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return f'{self.name} - {self.test.book.name}'
+
 
 class QuestionType(models.Model):
     name = models.CharField(
@@ -313,9 +319,6 @@ class ReadingModule(IndividualModuleAbstract):
     total_questions = models.PositiveIntegerField(
         help_text='How many questions are there in this module?', default=0)
 
-    def __str__(self):
-        return self.test.name if self.test else ""
-
     def save(self, *args, **kwargs):
         update_form_fields_with_ids(self)
         super(ReadingModule, self).save(*args, **kwargs)
@@ -342,8 +345,6 @@ class ReadingSection(IndividualModuleSectionAbstract):
 
 
 class WritingModule(IndividualModuleAbstract):
-    def __str__(self):
-        return self.test.name if self.test else ""
 
     @property
     def sections(self):
@@ -435,8 +436,6 @@ class WritingAttempt(IndividualModuleAttemptAbstract):
 
 
 class SpeakingModule(IndividualModuleAbstract):
-    def __str__(self):
-        return self.test.name if self.test else ""
 
     @property
     def sections(self):
