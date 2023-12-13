@@ -23,6 +23,7 @@ from io import BytesIO
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.cache import cache
+from KeenIeltsDjango.utils import imgix_url
 
 STATUS = (
     ('draft', 'Draft'),
@@ -173,6 +174,12 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
             return self.general_cover
         else:
             return self.academic_cover or self.general_cover or None
+
+    def cover_url(self, test_type="academic"):
+        if self.cover(test_type):
+            return imgix_url(self.cover(test_type).url)
+        else:
+            return None
 
     def tests_with_all_module(self, test_type):
         if test_type:
