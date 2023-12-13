@@ -87,7 +87,7 @@ class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_audio(self, obj):
-        url = f'{imgix_url(obj.audio.url)}'
+        url = f'{obj.audio.url}'
         return url
 
 
@@ -237,7 +237,7 @@ class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
     audio = serializers.SerializerMethodField()
 
     def get_audio(self, obj):
-        url = f'{imgix_url(obj.audio.url)}'
+        url = f'{obj.audio.url}'
         return url
 
     class Meta:
@@ -250,7 +250,7 @@ class SpeakingAttemptSerializer(AttemptSerializer):
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):
-        url = f'{imgix_url(obj.merged_audio.url)}' if obj.merged_audio else None
+        url = f'{obj.merged_audio.url}' if obj.merged_audio else None
         return url
 
     class Meta:

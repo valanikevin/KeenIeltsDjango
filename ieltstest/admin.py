@@ -92,7 +92,8 @@ class TestAdmin(admin.ModelAdmin):
 class ModuleAdmin(admin.ModelAdmin):
     search_fields = ['name']
     exclude = ['created_at', 'updated_at']
-    list_display = ["name", 'status', "test", "book_name", 'slug', ]
+    list_display = ["name", 'status', "test",
+                    "book_name", "test_type", 'slug', ]
 
     class Meta:
         abstract = True
