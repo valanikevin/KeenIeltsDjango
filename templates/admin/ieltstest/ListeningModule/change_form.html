@@ -1,0 +1,6 @@
+{% extends 'admin/change_form.html' %}
+
+{% block content %}
+  <h2>Book: {{ original.test.book.name }}</h2>
+  {{ block.super }}
+{% endblock %}

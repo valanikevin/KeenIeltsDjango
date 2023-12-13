@@ -5,6 +5,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from KeenIeltsDjango import wanderwave
 
+admin.site.site_header = "KeenIELTS Admin"
+admin.site.site_title = "KeenIELTS Admin Portal"
+
+
 urlpatterns = [
     path('wanderwave/', wanderwave.generate_itinerary, name='wanderwave'),
     path('admin/', admin.site.urls),
