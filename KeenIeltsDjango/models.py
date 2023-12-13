@@ -26,11 +26,11 @@ class SlugifiedBaseModal(models.Model):
         abstract = True
 
 
-class WeightedBaseModel(models.Model):
+class PriorityBaseModal(models.Model):
     """
     An abstract base model which adds a weight field for ordering objects.
     """
-    weight = models.PositiveIntegerField(blank=True, null=True)
+    priority = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         abstract = True

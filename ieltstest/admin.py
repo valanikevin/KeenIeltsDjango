@@ -77,7 +77,8 @@ class BookAdmin(admin.ModelAdmin):
     inlines = [TestInline,]
     exclude = ['created_at', 'updated_at']
     readonly_fields = ['slug']
-    list_display = ['name', 'copyright', 'slug', 'status', ]
+    list_display = ['name', 'copyright', 'slug', 'status', 'priority', ]
+    list_editable = ['status', 'priority']
 
 
 class TestAdmin(admin.ModelAdmin):

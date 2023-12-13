@@ -23,6 +23,7 @@ def get_book(request, book_slug):
     book = Book.objects.get(slug=book_slug)
     student_test_type = request.user.student.type if request.user.is_authenticated else 'academic'
     test_type = request.GET.get('testType', student_test_type)
+
     serializer = GetBookSerializer(
         book, context={'test_type': test_type}, many=False)
 
@@ -30,7 +31,7 @@ def get_book(request, book_slug):
 
 
 def get_books():
-    books = Book.objects.order_by('-id')
+    books = Book.objects.order_by('priority')
     return books
 
 

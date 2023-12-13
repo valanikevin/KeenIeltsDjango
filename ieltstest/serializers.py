@@ -142,7 +142,8 @@ class GetBookSerializer(serializers.ModelSerializer):
                   'website', 'copyright', 'tests', 'institute']
 
     def get_cover(self, obj):
-        return f'{imgix_url(obj.cover.url)}'
+        test_type = self.context.get('test_type')
+        return f'{imgix_url(obj.cover(test_type=test_type).url)}'
 
 
 class BookModuleSerializer(serializers.ModelSerializer):

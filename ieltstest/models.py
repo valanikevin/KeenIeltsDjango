@@ -1,5 +1,5 @@
 from django.db import models
-from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel, WeightedBaseModel
+from KeenIeltsDjango.models import SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal
 from coachinginstitute.models import CoachingInstitute
 from ckeditor_uploader.fields import RichTextUploadingField
 from ieltstest.answer_json.listening import get_listening_answer_default
@@ -103,7 +103,7 @@ class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
         abstract = True
 
 
-class Book(SlugifiedBaseModal, TimestampedBaseModel):
+class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
     DIFFICULTY = (
         ('beginner', 'Beginner'),
         ('intermediate', 'Intermediate'),
@@ -132,34 +132,38 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
 
     @property
     def tests(self):
-        return Test.objects.filter(book=self)
+        return Test.objects.filter(book=self).order_by('name')
 
     @property
     def tests_with_listening_module(self):
-        tests = self.tests.filter(listeningmodule__test__isnull=False)
+        tests = self.tests.filter(
+            listeningmodule__test__isnull=False).order_by('name')
         return tests
 
     def tests_with_reading_module(self, test_type):
         if test_type:
             tests = self.tests.filter(
-                readingmodule__test__isnull=False, readingmodule__test_type=test_type)
+                readingmodule__test__isnull=False, readingmodule__test_type=test_type).order_by('name')
         else:
-            tests = self.tests.filter(readingmodule__test__isnull=False)
+            tests = self.tests.filter(
+                readingmodule__test__isnull=False).order_by('name')
 
         return tests
 
     def tests_with_writing_module(self, test_type):
         if test_type:
             tests = self.tests.filter(
-                writingmodule__test__isnull=False, writingmodule__test_type=test_type)
+                writingmodule__test__isnull=False, writingmodule__test_type=test_type).order_by('name')
         else:
-            tests = self.tests.filter(writingmodule__test__isnull=False)
+            tests = self.tests.filter(
+                writingmodule__test__isnull=False).order_by('name')
 
         return tests
 
     @property
     def tests_with_speaking_module(self):
-        tests = self.tests.filter(speakingmodule__test__isnull=False)
+        tests = self.tests.filter(
+            speakingmodule__test__isnull=False).order_by('name')
         return tests
 
     def cover(self, test_type="academic"):
@@ -470,10 +474,10 @@ class SpeakingSection(IndividualModuleSectionAbstract):
 
     @property
     def questions(self):
-        return SpeakingSectionQuestion.objects.filter(speaking_section=self).order_by('weight')
+        return SpeakingSectionQuestion.objects.filter(speaking_section=self).order_by('priority')
 
 
-class SpeakingSectionQuestion(WeightedBaseModel):
+class SpeakingSectionQuestion(PriorityBaseModal):
     speaking_section = models.ForeignKey(
         SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
     question = models.CharField(
