@@ -65,7 +65,8 @@ class BookSerializerBasic(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_cover(self, obj):
-        return f'{imgix_url(obj.cover.url)}'
+        test_type = self.context.get('test_type')
+        return f'{imgix_url(obj.cover(test_type=test_type).url)}'
 
 
 class TestWithBookSerializer(serializers.ModelSerializer):
@@ -173,7 +174,8 @@ class BookModuleSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_cover(self, obj):
-        return f'{imgix_url(obj.cover.url)}'
+        test_type = self.context.get('test_type')
+        return f'{imgix_url(obj.cover(test_type=test_type).url)}'
 
 
 class BookBasicSerializer(serializers.ModelSerializer):

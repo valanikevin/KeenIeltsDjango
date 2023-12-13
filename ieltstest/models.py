@@ -116,7 +116,9 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     description = models.TextField(help_text="Add small book description.")
     difficulty = models.CharField(
         choices=DIFFICULTY, max_length=200, help_text='Difficulty level of this test')
-    cover = models.ImageField(
+    academic_cover = models.ImageField(
+        help_text='Image of the Book Cover', null=True, blank=True)
+    general_cover = models.ImageField(
         help_text='Image of the Book Cover', null=True, blank=True)
     institute = models.ForeignKey(
         CoachingInstitute, on_delete=models.SET_NULL, blank=False, null=True, help_text='Which institute has created this test?')
@@ -159,6 +161,14 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel):
     def tests_with_speaking_module(self):
         tests = self.tests.filter(speakingmodule__test__isnull=False)
         return tests
+
+    def cover(self, test_type="academic"):
+        if test_type == 'academic':
+            return self.academic_cover
+        elif test_type == 'general':
+            return self.general_cover
+        else:
+            return None
 
     def tests_with_all_module(self, test_type):
         if test_type:

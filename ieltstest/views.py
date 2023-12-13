@@ -21,8 +21,11 @@ def ieltstest(request):
 @api_view(['GET'])
 def get_book(request, book_slug):
     book = Book.objects.get(slug=book_slug)
-    serializer = GetBookSerializer(book, many=False)
-    
+    student_test_type = request.user.student.type if request.user.is_authenticated else 'academic'
+    test_type = request.GET.get('testType', student_test_type)
+    serializer = GetBookSerializer(
+        book, context={'test_type': test_type}, many=False)
+
     return Response(serializer.data)
 
 
