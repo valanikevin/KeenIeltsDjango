@@ -31,7 +31,7 @@ def get_book(request, book_slug):
 
 
 def get_books():
-    books = Book.objects.order_by('priority')
+    books = Book.objects.filter(status="published").order_by('priority')
     return books
 
 

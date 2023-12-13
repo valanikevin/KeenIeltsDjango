@@ -87,6 +87,7 @@ class TestAdmin(admin.ModelAdmin):
                WritingModuleInline, SpeakingModuleInline]
     exclude = ['created_at', 'updated_at']
     list_display = ['name', 'book', 'status', 'slug', ]
+    list_editable = ['status', ]
 
 
 class ModuleAdmin(admin.ModelAdmin):
@@ -94,6 +95,7 @@ class ModuleAdmin(admin.ModelAdmin):
     exclude = ['created_at', 'updated_at']
     list_display = ["name", 'status', "test",
                     "book_name", "test_type", 'slug', ]
+    list_editable = ['status', ]
 
     class Meta:
         abstract = True

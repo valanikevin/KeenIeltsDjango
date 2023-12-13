@@ -133,7 +133,7 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
 
     @property
     def tests(self):
-        return Test.objects.filter(book=self).order_by('name')
+        return Test.objects.filter(book=self, status="published").order_by('name')
 
     @property
     def tests_with_listening_module(self):
@@ -206,6 +206,21 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
             test.create_empty_modules(i+1, module_type=module_type)
             print(f"T: {test.name} | ID: {test.id} | Book: {test.book.name}")
 
+    def check_publish_status(self):
+        ready_to_publish = True
+        tests = Test.objects.filter(book=self)
+        for test in tests:
+            if test.status != "published":
+                ready_to_publish = False
+                break
+        if ready_to_publish:
+            self.status = "published"
+            self.save()
+
+        else:
+            self.status = "draft"
+            self.save()
+
 
 class Test(SlugifiedBaseModal, TimestampedBaseModel):
     book = models.ForeignKey(
@@ -245,6 +260,35 @@ class Test(SlugifiedBaseModal, TimestampedBaseModel):
             test=self, name=f'Speaking Test {test_no}', test_type="both", status="modules-created")
 
         return True
+
+    def check_publish_status(self):
+        print("Checking publish status")
+        ready_to_publish = True
+
+        for module in self.listening_module:
+            if module.status != "published":
+                ready_to_publish = False
+
+        for module in self.reading_module:
+            if module.status != "published":
+                ready_to_publish = False
+
+        for module in self.writing_module:
+            if module.status != "published":
+                ready_to_publish = False
+
+        for module in self.speaking_module:
+            if module.status != "published":
+                ready_to_publish = False
+
+        if ready_to_publish:
+            self.status = "published"
+            self.save()
+
+            self.book.check_publish_status()
+        else:
+            self.status = "draft"
+            self.save()
 
 
 class ListeningModule(IndividualModuleAbstract):
@@ -702,7 +746,6 @@ def update_form_fields_with_ids(module):
             for element in form_elements:
                 if element.name == 'input' and element.get('type') == 'radio':
                     radio_name = element['name']
-                    print(f'RADIO: {radio_name}')
                     if processed_radio_names.get(radio_name):
                         element['name'] = f'que-{processed_radio_names.get(radio_name)}'
                         element['required'] = f'false'
@@ -718,7 +761,6 @@ def update_form_fields_with_ids(module):
                     # element['id'] = f'que-{counter}'
                     element['name'] = f'que-{counter}'
                     element['required'] = f'false'
-                print(element)
             section.total_questions = local_counter
             section.questions = str(soup)
             section.save()
@@ -1036,3 +1078,14 @@ ielts_reading_bands_description = {
     8.5: "You can comprehend virtually everything you read, from complex articles to abstract writings, with a deep understanding of structure and meaning.",
     9.0: "You have an expert level of reading comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
 }
+
+
+@receiver(post_save, sender=Test)
+def change_book_status(sender, instance, created, **kwargs):
+    instance.book.check_publish_status()
+
+
+@receiver(post_save)
+def change_test_status(sender, instance, created, **kwargs):
+    if sender in [ListeningModule, ReadingModule, WritingModule, SpeakingModule]:
+        instance.test.check_publish_status()
