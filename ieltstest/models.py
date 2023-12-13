@@ -172,7 +172,7 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
         elif test_type == 'general':
             return self.general_cover
         else:
-            return None
+            return self.academic_cover or self.general_cover or None
 
     def tests_with_all_module(self, test_type):
         if test_type:
