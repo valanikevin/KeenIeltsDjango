@@ -167,9 +167,9 @@ class Book(SlugifiedBaseModal, TimestampedBaseModel, PriorityBaseModal):
         return tests
 
     def cover(self, test_type="academic"):
-        if test_type == 'academic':
+        if test_type == 'academic' and self.academic_cover:
             return self.academic_cover
-        elif test_type == 'general':
+        elif test_type == 'general' and self.general_cover:
             return self.general_cover
         else:
             return self.academic_cover or self.general_cover or None
