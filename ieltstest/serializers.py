@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt, CoachingInstitute
 from django.conf import settings
-from KeenIeltsDjango.utils import imgix_url
+from KeenIeltsDjango.utils import imgix_url, audio_url
 
 
 class CoachingInstituteSerializer(serializers.ModelSerializer):
@@ -87,7 +87,7 @@ class ListeningModuleWithSectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_audio(self, obj):
-        url = f'{obj.audio.url}'
+        url = f'{audio_url(obj.audio.url)}'
         return url
 
 
@@ -240,7 +240,7 @@ class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
     audio = serializers.SerializerMethodField()
 
     def get_audio(self, obj):
-        url = f'{obj.audio.url}'
+        url = f'{audio_url(obj.audio.url)}'
         return url
 
     class Meta:
@@ -253,7 +253,7 @@ class SpeakingAttemptSerializer(AttemptSerializer):
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):
-        url = f'{obj.merged_audio.url}' if obj.merged_audio else None
+        url = f'{audio_url(obj.merged_audio.url)}' if obj.merged_audio else None
         return url
 
     class Meta:

@@ -10,3 +10,7 @@ def imgix_url(url, complete=True):
             return url
     else:
         return 'https://keenielts-django.imgix.net/' + url
+
+
+def audio_url(url, complete=True):
+    return f'{settings.BASE_URL}{url}'

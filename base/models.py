@@ -12,5 +12,5 @@ class Issue(TimestampedBaseModel):
     description = models.TextField(help_text="Describe the issue in detail")
     url = models.URLField(blank=True, null=True)
 
-    def __str___(self):
-        return self.type
+    def __str__(self):
+        return f'{self.user.email} | {self.type}'
