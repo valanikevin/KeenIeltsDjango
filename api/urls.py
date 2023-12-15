@@ -13,4 +13,5 @@ urlpatterns = [
     path('leaderboard/', include('leaderboard.urls')),
     path('student/', include('student.urls')),
     path('account/', include('custom_user.urls')),
+    path('base/', include('base.urls')),
 ]

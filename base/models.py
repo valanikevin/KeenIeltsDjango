@@ -10,6 +10,7 @@ class Issue(TimestampedBaseModel):
                              on_delete=models.CASCADE)
     type = models.CharField(max_length=100)
     description = models.TextField(help_text="Describe the issue in detail")
+    url = models.URLField(blank=True, null=True)
 
     def __str___(self):
         return self.type
