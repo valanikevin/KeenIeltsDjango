@@ -180,9 +180,14 @@ class BookModuleSerializer(serializers.ModelSerializer):
 
 
 class BookBasicSerializer(serializers.ModelSerializer):
+    cover = serializers.SerializerMethodField()
+
     class Meta:
         model = Book
         fields = ['slug', 'name', 'difficulty', 'cover']
+
+    def get_cover(self, obj):
+        return obj.cover_url()
 
 
 class AttemptSerializer(serializers.ModelSerializer):
@@ -209,8 +214,6 @@ class AttemptSerializer(serializers.ModelSerializer):
 
 
 class ListeningAttemptSerializer(AttemptSerializer):
-    book = serializers.SerializerMethodField()
-    bands_description = serializers.SerializerMethodField()
 
     class Meta:
         model = ListeningAttempt
