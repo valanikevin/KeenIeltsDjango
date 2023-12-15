@@ -23,7 +23,7 @@ class CommentMain(models.Model):
         return self.unique_id
 
     def comments(self):
-        return self.commentitem_set.order_by('-id')
+        return self.commentitem_set.order_by('-id')[:30]
 
 
 class CommentItem(TimestampedBaseModel):
