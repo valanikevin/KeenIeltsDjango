@@ -14,3 +14,23 @@ class Issue(TimestampedBaseModel):
 
     def __str__(self):
         return f'{self.user.email} | {self.type}'
+
+
+class CommentMain(models.Model):
+    unique_id = models.CharField(max_length=500, unique=True)
+
+    def __str__(self):
+        return self.unique_id
+
+    def comments(self):
+        return self.commentitem_set.order_by('-id')
+
+
+class CommentItem(TimestampedBaseModel):
+    main = models.ForeignKey(CommentMain, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    comment = models.TextField(help_text="Enter your comment here")
+
+    def __str__(self):
+        return f'{self.user.email} | {self.comment}'
