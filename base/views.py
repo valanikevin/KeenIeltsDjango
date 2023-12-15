@@ -26,8 +26,8 @@ def report_mistake(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_comment(request):
-    unique_id = request.POST.get("unique_id")
-    comment = request.POST.get("comment")
+    unique_id = request.data['unique_id']
+    comment = request.data['comment']
     user = request.user
 
     comment_main = CommentMain.objects.get_or_create(unique_id=unique_id)[0]
@@ -43,6 +43,10 @@ def add_comment(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_comments(request, unique_id):
-    comment_main = CommentMain.objects.get(unique_id=unique_id)
-    serializer = CommentMainSerializer(comment_main, many=False)
+    comment_main = CommentMain.objects.filter(unique_id=unique_id)
+    if comment_main.exists():
+        comment_main = comment_main.first()
+        serializer = CommentMainSerializer(comment_main, many=False)
+    else:
+        serializer = CommentMainSerializer(None, many=False)
     return Response(serializer.data, status=200)
