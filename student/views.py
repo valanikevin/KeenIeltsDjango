@@ -11,16 +11,12 @@ def overall_performance(request):
     total_tests = student.average_score["overall"]["total_attempts"]
     if total_tests == 0:
         return Response({
-            'overall_feedback_date': None,
-            'overall_feedback': None,
             'average_score': student.average_score,
             'fifteen_days_chart': None,
             'recent_tests': None,
         }, status=200)
     try:
         data = {
-            'overall_feedback_date': student.overallperformancefeedback.updated_at.strftime("%B %d, %Y") if student.overallperformancefeedback else None,
-            'overall_feedback': student.overall_feedback,
             'average_score': student.average_score,
             'fifteen_days_chart': student.fifteen_days_chart,
             'recent_tests': student.attempts(),
@@ -35,9 +31,32 @@ def overall_performance(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def overall_performance_feedback(request):
+    student = request.user.student
+    total_tests = student.average_score["overall"]["total_attempts"]
+    if total_tests == 0:
+        return Response({
+            'overall_feedback_date': None,
+            'overall_feedback': None,
+        }, status=200)
+    try:
+        data = {
+            'overall_feedback_date': student.overallperformancefeedback.updated_at.strftime("%B %d, %Y") if student.overallperformancefeedback else None,
+            'overall_feedback': student.overall_feedback,
+
+
+        }
+    except Exception as e:
+        data = {
+            'exception': str(e)
+        }
+    return Response(data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def get_attempts_from_book(request, book_slug):
     student = request.user.student
     attempts = student.attempts(book_slug=book_slug)
-    
-    return Response(attempts, status=200)
 
+    return Response(attempts, status=200)
