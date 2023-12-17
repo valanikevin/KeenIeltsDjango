@@ -146,7 +146,6 @@ class Student(SlugifiedBaseModal):
 
 # Function to round off a number to the nearest 0.5
 
-
     @property
     def fifteen_days_chart(self):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
@@ -245,8 +244,9 @@ class OverallPerformanceFeedback(TimestampedBaseModel):
     @property
     def feedback(self):
         _feedback = ""
-        total_attempts = Decimal(self.student.average_score['overall']['total_attempts'])
-        
+        total_attempts = Decimal(
+            self.student.average_score['overall']['total_attempts'])
+
         if self.raw_feedback and (total_attempts == self.total_attempts or self.updated_at > timezone.now() - timedelta(days=1)):
             _feedback = self.raw_feedback
         else:
