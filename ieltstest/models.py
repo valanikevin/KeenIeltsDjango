@@ -792,7 +792,8 @@ def check_answers(attempt):
             user_answer = str(attempt.answers.get(
                 f"que-{counter}"))
             is_user_answer_correct = False
-            if any(s.lower() == user_answer.lower() for s in correct_answer):
+            user_answer = str(user_answer.lower()).strip()
+            if any(s.lower() == user_answer for s in correct_answer):
                 is_user_answer_correct = True
                 correct_answers_count = correct_answers_count + 1
                 section_correct = section_correct + 1
