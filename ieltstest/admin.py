@@ -139,6 +139,7 @@ class ReadingSectionAdmin(SectionAdmin):
 
 
 class SpeakingSectionAdmin(SectionAdmin):
+    list_display = ['name', 'speaking_module', ]
     inlines = [SpeakingSectionQuestionInline, ]
 
 
