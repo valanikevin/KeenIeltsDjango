@@ -47,7 +47,7 @@ TEST_TYPE = (
 class IndividualModuleAbstract(SlugifiedBaseModal):
     test_type = models.CharField(
         max_length=200, help_text='What is test type for this?', choices=TEST_TYPE)
-    test = models.OneToOneField(
+    test = models.ForeignKey(
         'Test', help_text='Select Parent Test', on_delete=models.CASCADE,)
     status = models.CharField(
         choices=STATUS, help_text='What is current status of this test?', max_length=200)
