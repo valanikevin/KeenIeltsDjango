@@ -144,6 +144,8 @@ def update_attempt(request, module_type, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
+    print(request.POST)
+    print(request.FILES)
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
@@ -153,11 +155,12 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 
     timestamps = parse_post_data(request)
 
-    audios = save_audio_files(request, attempt, timestamps)
+    save_audio_files(request, attempt, timestamps)
 
-    update_attempt_status(request, attempt)
-
-    attempt.merge_speaking_audio(audios)
+    attempt.status = 'Completed'
+    attempt.merge_audio_timestamps(
+        durations=request.POST.get('merged_audio_duration'))
+    attempt.save()
 
     data = {'status': attempt.status}
     return Response(data=data)
@@ -166,28 +169,30 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 def parse_post_data(request):
     timestamps = {}
     for key, value in request.POST.items():
-        if key != 'attempt_type':
+        if key != 'attempt_type' and key != 'merged_audio_duration':
             main_key, nested_key = key.split(',')
             timestamps.setdefault(int(main_key), {})[
                 int(nested_key)] = json.loads(value)
+
     return timestamps
 
 
 def save_audio_files(request, attempt, timestamps):
-    audios = []
     for section_id, audio_blob in request.FILES.items():
-        section = SpeakingSection.objects.get(id=int(section_id))
-        speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
-            section=section,
-            attempt=attempt,
-            defaults={'timestamps': timestamps.get(int(section_id))}
-        )
-        speaking_audio.audio.save(
-            f'{section_id}.mp3', ContentFile(audio_blob.read()))
+        if section_id == "merged_audio":
+            attempt.merged_audio.save(
+                f'{attempt.slug}.mp3', ContentFile(audio_blob.read()))
+        else:
+            section = SpeakingSection.objects.get(id=int(section_id))
+            speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
+                section=section,
+                attempt=attempt,
+                defaults={'timestamps': timestamps.get(int(section_id))}
+            )
+            speaking_audio.audio.save(
+                f'{section_id}.mp3', ContentFile(audio_blob.read()))
 
-        speaking_audio.audio_to_text()
-        audios.append(speaking_audio)
-    return audios
+    return True
 
 
 def update_attempt_status(request, attempt):

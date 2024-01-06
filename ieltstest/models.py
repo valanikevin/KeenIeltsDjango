@@ -17,9 +17,6 @@ import json
 import time
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models import ChatOpenAI
-from django.core.files.base import ContentFile
-from pydub import AudioSegment
-from io import BytesIO
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.cache import cache
@@ -85,7 +82,8 @@ class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
         ('Not Started', 'Not Started'),
         ('In Progress', 'In Progress'),
         ('Completed', 'Completed'),
-        ('Evaluated', 'Evaluated')
+        ('Evaluated', 'Evaluated'),
+        ('Ready', 'Ready'),
     )
     status = models.CharField(
         choices=STATUS, help_text='What is currect status of this attempt?', default='Not Started')
@@ -590,39 +588,27 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         return SpeakingAttemptAudio.objects.filter(
             attempt=self).order_by('section__section')
 
-    def merge_speaking_audio(self, audios=None):
+    def merge_audio_timestamps(self, durations):
+        durations = convert_to_dict(durations)
+
         # Initialize an empty AudioSegment object
-        merged_audio = AudioSegment.empty()
         audio_length = 0
         timestamp_secs = 0
         timestamps = {}
 
-        audios = self.audios.all() if not audios else audios
+        audios = self.audios.all()
 
         for audio in audios:
-            audio_segment = AudioSegment.from_file(audio.audio.path)
             for stamp in audio.timestamps:
                 timestamps[stamp] = timestamp_secs
                 timestamp_secs = timestamp_secs + \
                     audio.timestamps.get(stamp).get('elapsedTime')
-            _audio_length = len(audio_segment) / 1000.0
+            _audio_length = durations.get(int(audio.section.id))
             audio_length = audio_length + _audio_length
             timestamp_secs = audio_length
 
-            # Concatenate audio
-            merged_audio += audio_segment
-
         self.merged_timestamps = timestamps
-        # Create in-memory byte buffer
-        buffer = BytesIO()
-        merged_audio.export(buffer, format='mp3')
-        buffer.seek(0)  # Rewind the buffer
 
-        # Create a Django ContentFile and save to the FileField
-        content_file = ContentFile(buffer.read(), 'merged_file.mp3')
-        self.merged_audio = content_file
-
-        buffer.close()  # Close the buffer
         self.save()
         return self
 
@@ -1079,6 +1065,12 @@ ielts_reading_bands_description = {
     8.5: "You can comprehend virtually everything you read, from complex articles to abstract writings, with a deep understanding of structure and meaning.",
     9.0: "You have an expert level of reading comprehension, understanding everything in both concrete and abstract contexts, even when faced with complex language."
 }
+
+
+def convert_to_dict(data_string):
+    # Splitting the string into pairs and then splitting each pair into key-value
+    pairs = data_string.strip(';').split(';')
+    return {int(k): float(v) for k, v in (pair.split(':') for pair in pairs)}
 
 
 @receiver(post_save, sender=Test)
