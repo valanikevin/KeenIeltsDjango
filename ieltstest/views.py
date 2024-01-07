@@ -144,8 +144,6 @@ def update_attempt(request, module_type, attempt_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
-    print(request.POST)
-    print(request.FILES)
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
