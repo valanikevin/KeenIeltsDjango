@@ -13,6 +13,7 @@ from django.contrib.auth import get_user_model
 from custom_user.forms import UserCreationForm
 from custom_user.forms import AccountSettingForm, PasswordChangeForm
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Login Views
 
@@ -129,13 +130,30 @@ def verify_email(request):
     email = data.get('email')
     verification_code = data.get('otp')
 
-    user = User.objects.get(email=email)
-    if user.verification_code == verification_code:
-        user.is_verified = True
-        user.save()
-        return Response({'message': 'Email verified successfully'}, status=200)
-    else:
-        return Response({'message': 'Invalid verification code'}, status=400)
+    try:
+        user = User.objects.get(email=email)
+        if user.verification_code == verification_code:
+            user.is_verified = True
+            user.save()
+
+            # Generate token
+            refresh = RefreshToken.for_user(user)
+            token = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+
+            # Add custom claims
+            token['email'] = user.email
+            token['first_name'] = user.first_name
+            token['last_name'] = user.last_name
+            token['coachinginstitute_slug'] = user.student.institute.slug if user.student.institute else None
+
+            return Response({'message': 'Email verified successfully', 'token': token}, status=200)
+        else:
+            return Response({'message': 'Invalid verification code'}, status=400)
+    except User.DoesNotExist:
+        return Response({'message': 'User not found'}, status=404)
 
 
 @api_view(['POST'])
