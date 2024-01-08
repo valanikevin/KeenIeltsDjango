@@ -13,5 +13,5 @@ You will receive:
 
 {data}
 
-Provide your response in the JSON format only, in the following keys: overall_band_score (decimal),fluency_and_coherence_bands (decimal), grammatical_range_and_accuracy_bands (decimal) , lexical_resource_bands (decimal), pronunciation_bands (decimal), overall_personalized_feedback_suggestions (string/100-200 words), grammar_vocabulary_fluency_accuracy_suggestions (Python List 3/4 points/150-250 words).
+Provide your response in the JSON format only, in the following keys: overall_band_score (decimal),fluency_and_coherence_bands (decimal), grammatical_range_and_accuracy_bands (decimal) , lexical_resource_bands (decimal), pronunciation_bands (decimal), overall_personalized_feedback_suggestions (string/100-200 words), word_choice_suggestions (Python List 3/4 points/150-250 words).
 """

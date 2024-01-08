@@ -929,8 +929,6 @@ Questions Asked: {question_list},
 Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
 """
 
-        print(data)
-
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
     messages = [SystemMessage(content=prompt)]
 
