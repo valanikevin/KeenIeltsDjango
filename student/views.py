@@ -45,8 +45,6 @@ def overall_performance_feedback(request):
         data = {
             'overall_feedback_date': student.overallperformancefeedback.updated_at.strftime("%B %d, %Y") if student.overallperformancefeedback else None,
             'overall_feedback': student.overall_feedback,
-
-
         }
     except Exception as e:
         data = {
@@ -70,7 +68,7 @@ def get_attempts(request, module_type):
     Attempt, AttemptSerializer = get_module_attempt_from_slug(module_type)
 
     attempts = Attempt.objects.filter(
-        user=request.user).order_by('-created_at')
+        user=request.user, status__in=["Completed", "Evaluated", "Ready"]).order_by('-created_at')
 
     attempts_list = []
 

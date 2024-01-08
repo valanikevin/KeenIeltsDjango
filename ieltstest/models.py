@@ -773,21 +773,21 @@ def check_answers(attempt):
         section_incorrect = 0
         for answer in answers:
             _evaluation = {}
-            counter = counter + 1
-            correct_answer = answer['answer']  # List
-            user_answer = str(attempt.answers.get(
-                f"que-{counter}"))
+            counter += 1
+            correct_answers = answer['answer']  # List of correct answers
+            user_answer = attempt.answers.get(f"que-{counter}", "")
             is_user_answer_correct = False
-            user_answer = str(user_answer.lower()).strip()
-            if any(s.lower() == user_answer for s in correct_answer):
+            user_answer = user_answer.lower().strip()
+            # Check if user's answer matches any of the correct answers
+            if any(user_answer == correct.lower() for correct in correct_answers):
                 is_user_answer_correct = True
-                correct_answers_count = correct_answers_count + 1
-                section_correct = section_correct + 1
+                correct_answers_count += 1
+                section_correct += 1
             else:
-                incorrect_answers_count = incorrect_answers_count + 1
-                section_incorrect = section_incorrect + 1
+                incorrect_answers_count += 1
+                section_incorrect += 1
 
-            _evaluation['correct_answer'] = correct_answer
+            _evaluation['correct_answer'] = correct_answers
             _evaluation['user_answer'] = user_answer
             _evaluation['is_user_answer_correct'] = is_user_answer_correct
             evaluation[f'que-{counter}'] = _evaluation
@@ -807,8 +807,6 @@ def check_answers(attempt):
 
     complete_evaluation['all_questions'] = evaluation
     complete_evaluation['all_sections'] = sections
-
-    # Add the best and worst scored sections to the evaluation
     complete_evaluation['best_scored_section'] = best_scored_section
     complete_evaluation['worst_scored_section'] = worst_scored_section
 
@@ -819,9 +817,9 @@ def check_answers(attempt):
     attempt.correct_answers = correct_answers_count
     attempt.incorrect_answers = incorrect_answers_count
     attempt.status = "Evaluated"
-
     attempt.time_taken = timetaken
     return attempt
+
 
 
 def get_listening_ielts_score(correct, total=40):
