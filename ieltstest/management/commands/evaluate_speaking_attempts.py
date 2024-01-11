@@ -43,12 +43,12 @@ Regards,
 Team KeenIELTS
 """
 
-    send_mail(
-        subject='KeenIELTS Speaking Test Result',
-        message=message,
-        from_email='KeenIELTS <notifications@zepto.keenielts.com>',
-        recipient_list=[attempt.user.email, ],
-        fail_silently=True,
-    )
+    # send_mail(
+    #     subject='KeenIELTS Speaking Test Result',
+    #     message=message,
+    #     from_email='KeenIELTS <notifications@zepto.keenielts.com>',
+    #     recipient_list=[attempt.user.email, ],
+    #     fail_silently=True,
+    # )
 
     return True
