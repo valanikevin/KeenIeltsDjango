@@ -46,7 +46,7 @@ class Student(SlugifiedBaseModal):
         if is_new:
             OverallPerformanceFeedback.objects.create(student=self)
 
-    def attempts(self, book_slug=None, module_limit=5, total_limit=20, modules=['reading', 'listening', 'writing', 'speaking']):
+    def attempts(self, book_slug=None, module_limit=5, total_limit=10, modules=['reading', 'listening', 'writing', 'speaking']):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
         recent_tests = []
 
