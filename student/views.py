@@ -65,27 +65,9 @@ def get_attempts_from_book(request, book_slug):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_attempts(request, module_type):
-    Attempt, AttemptSerializer = get_module_attempt_from_slug(module_type)
+    student = request.user.student
 
-    attempts = Attempt.objects.filter(
-        user=request.user, status__in=["Completed", "Evaluated", "Ready"]).order_by('-created_at')
+    attempts = student.attempts(
+        modules=[module_type], module_limit=None, total_limit=None)
 
-    attempts_list = []
-
-    for attempt in attempts:
-
-        attempts_list.append(
-            {
-                'slug': attempt.slug,
-                'module_type': module_type,
-                'module_slug': attempt.module.slug,
-                'book_name': attempt.module.test.book.name,
-                'module_name': attempt.module.name,
-                'status': attempt.status,
-                'updated_at': attempt.updated_at.strftime("%B %d, %Y"),
-                'bands': attempt.bands,
-
-            }
-        )
-
-    return Response(attempts_list, status=200)
+    return Response(attempts, status=200)

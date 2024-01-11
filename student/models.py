@@ -45,28 +45,29 @@ class Student(SlugifiedBaseModal):
         if is_new:
             OverallPerformanceFeedback.objects.create(student=self)
 
-    def attempts(self, book_slug=None, limit=5):
+    def attempts(self, book_slug=None, module_limit=5, total_limit=20, modules=['reading', 'listening', 'writing', 'speaking']):
         from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
-
-        modules = ['reading', 'listening', 'writing', 'speaking']
         recent_tests = []
 
         for module in modules:
+            print(module)
             IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
                 module)
 
             # Find top 5 attempts from each module
             module_attempts = IndividualModuleAttempt.objects.filter(
-                user=self.user, status="Evaluated").order_by('-created_at')
+                user=self.user, status__in=["Completed", "Evaluated", "Ready"]).order_by('-created_at')
             if book_slug:
                 module_attempts = module_attempts.filter(
                     module__test__book__slug=book_slug)
 
-            module_attempts = module_attempts[:limit]
+            if module_limit:
+                module_attempts = module_attempts[:module_limit]
 
             if module_attempts.exists():
                 for attempt in module_attempts:
                     recent_tests.append({
+                        'status': attempt.status,
                         'created_at': attempt.created_at,
                         'module': module,
                         'score': attempt.bands,
@@ -81,8 +82,9 @@ class Student(SlugifiedBaseModal):
         sorted_attempts = sorted(
             recent_tests, key=lambda x: x['created_at'], reverse=True)
 
-        # Limit the number of items to a maximum of 10
-        sorted_attempts = sorted_attempts[:15]
+        if total_limit:
+            # Limit the number of items to a maximum of 10
+            sorted_attempts = sorted_attempts[:15]
 
         return sorted_attempts
 
