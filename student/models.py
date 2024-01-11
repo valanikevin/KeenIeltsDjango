@@ -14,6 +14,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models import ChatOpenAI
 from django.core.cache import cache
 from decimal import Decimal
+from base.models import AiResponse
 
 
 class Student(SlugifiedBaseModal):
@@ -150,7 +151,6 @@ class Student(SlugifiedBaseModal):
 
 
 # Function to round off a number to the nearest 0.5
-
 
     @property
     def fifteen_days_chart(self):
@@ -289,5 +289,11 @@ Last 15 Days Performance Data:
 
     messages = [SystemMessage(content=prompt)]
     evaluation = chat_model.invoke(messages).content
+
+    AiResponse.objects.create(
+        category="speaking",
+        input=prompt,
+        response=evaluation,
+    )
 
     return evaluation

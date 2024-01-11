@@ -21,6 +21,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.cache import cache
 from KeenIeltsDjango.utils import imgix_url
+from base.models import AiResponse
 
 STATUS = (
     ('draft', 'Draft'),
@@ -926,6 +927,13 @@ Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
     messages = [SystemMessage(content=prompt)]
 
     evaluation = chat_model.invoke(messages).content
+
+    AiResponse.objects.create(
+        category="speaking",
+        input=prompt,
+        response=evaluation,
+    )
+
     return evaluation
 
 
@@ -962,6 +970,13 @@ def openai_get_writing_evaluation(attempt, section):
     messages = [SystemMessage(content=prompt)]
 
     evaluation = chat_model.invoke(messages).content
+
+    AiResponse.objects.create(
+        category="speaking",
+        input=prompt,
+        response=evaluation,
+    )
+    
     return evaluation
 
 

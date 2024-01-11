@@ -21,9 +21,9 @@ class CommentMainAdmin(admin.ModelAdmin):
 
 
 class AiResponseAdmin(admin.ModelAdmin):
-    list_display = ('info', 'category', 'status')
+    list_display = ('category', 'status')
     list_filter = ('status', 'category')
-    search_fields = ('info', 'status')
+    search_fields = ('status', 'input')
 
 
 admin.site.register(Issue, IssueAdmin)

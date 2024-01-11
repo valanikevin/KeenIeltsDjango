@@ -51,10 +51,8 @@ class AiResponse(TimestampedBaseModel):
         max_length=100, choices=STATUS, default='pending')
     category = models.CharField(
         max_length=100, choices=CATEGORY, default='other')
-    info = models.CharField(
-        max_length=500, help_text="Info about this AI response")
     input = models.TextField(help_text="Input to the AI")
     response = models.TextField(help_text="Response from the AI")
 
     def __str__(self):
-        return f'{self.info} '
+        return f'{self.category} '
