@@ -37,12 +37,20 @@ class CommentItem(TimestampedBaseModel):
 
 
 class AiResponse(TimestampedBaseModel):
+    CATEGORY = (
+        ('writing', 'Writing'),
+        ('speaking', 'Speaking'),
+        ('dashboard', 'Dashboard'),
+        ('other', 'Other')
+    )
     STATUS = (
         ('pending', 'Pending'),
         ('completed', 'Completed'),
     )
     status = models.CharField(
         max_length=100, choices=STATUS, default='pending')
+    category = models.CharField(
+        max_length=100, choices=CATEGORY, default='other')
     info = models.CharField(
         max_length=500, help_text="Info about this AI response")
     input = models.TextField(help_text="Input to the AI")
