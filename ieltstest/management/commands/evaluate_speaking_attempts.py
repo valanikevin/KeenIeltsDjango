@@ -25,30 +25,5 @@ class Command(BaseCommand):
             attempt.status = 'Verify Bands'
             attempt.save()
 
-            # Send email
-            send_evaluation_email(attempt)
         print("Evaluted all speaking attempts")
 
-
-def send_evaluation_email(attempt):
-    message = f"""
-Hi {attempt.user.first_name},
-Your KeenIELTS speaking test result is now available on your account. To view your results, please log in to your account.
-
-Test ID: {attempt.slug}
-Book Name: {attempt.module.test.book.name}
-Test Name: {attempt.module.test.name}
-
-Regards,
-Team KeenIELTS
-"""
-
-    # send_mail(
-    #     subject='KeenIELTS Speaking Test Result',
-    #     message=message,
-    #     from_email='KeenIELTS <notifications@zepto.keenielts.com>',
-    #     recipient_list=[attempt.user.email, ],
-    #     fail_silently=True,
-    # )
-
-    return True

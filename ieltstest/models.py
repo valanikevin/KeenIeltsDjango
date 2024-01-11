@@ -22,6 +22,7 @@ from django.dispatch import receiver
 from django.core.cache import cache
 from KeenIeltsDjango.utils import imgix_url
 from base.models import AiResponse
+from django.core.mail import send_mail
 
 STATUS = (
     ('draft', 'Draft'),
@@ -542,15 +543,18 @@ class SpeakingSectionQuestion(PriorityBaseModal):
 
 
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
+    fluency_and_coherence_bands = models.FloatField(default=0.0, )
+    grammatical_range_and_accuracy_bands = models.FloatField(default=0.0, )
+    lexical_resource_bands = models.FloatField(default=0.0, )
+    pronunciation_bands = models.FloatField(default=0.0, )
+    is_email_sent = models.BooleanField(default=False)
+
     module = models.ForeignKey(
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
     merged_timestamps = models.JSONField(null=True, blank=True)
-    fluency_and_coherence_bands = models.FloatField(default=0.0, )
-    grammatical_range_and_accuracy_bands = models.FloatField(default=0.0, )
-    lexical_resource_bands = models.FloatField(default=0.0, )
-    pronunciation_bands = models.FloatField(default=0.0, )
+    
 
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
@@ -565,12 +569,39 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
                 'lexical_resource_bands')
             self.pronunciation_bands = evaluation.get('pronunciation_bands')
 
-        # Save again to ensure the FileField and other fields are updated
+        if self.is_email_sent == False and self.status == "Ready":
+            self.send_evaluation_email()
+            self.is_email_sent = True
+
         super(SpeakingAttempt, self).save(*args, **kwargs)
 
     @property
     def bands_description(self):
         return ielts_speaking_bands_description.get(self.bands)
+
+
+    def send_evaluation_email(self):
+        message = f"""
+    Hi {self.user.first_name},
+    Your KeenIELTS speaking test result is now available on your account. To view your results, please log in to your account.
+
+    Test ID: {self.slug}
+    Book Name: {self.module.test.book.name}
+    Test Name: {self.module.test.name}
+
+    Regards,
+    Team KeenIELTS
+    """
+
+        send_mail(
+            subject='KeenIELTS Speaking Test Result',
+            message=message,
+            from_email='KeenIELTS <notifications@zepto.keenielts.com>',
+            recipient_list=[self.user.email, ],
+            fail_silently=True,
+        )
+
+        return True
 
     def get_evaluation(self):
 
