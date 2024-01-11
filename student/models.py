@@ -50,13 +50,12 @@ class Student(SlugifiedBaseModal):
         recent_tests = []
 
         for module in modules:
-            print(module)
             IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
                 module)
 
-            # Find top 5 attempts from each module
+            # Find top attempts from each module
             module_attempts = IndividualModuleAttempt.objects.filter(
-                user=self.user, status__in=["Completed", "Evaluated", "Ready"]).order_by('-created_at')
+                user=self.user, status__in=["Completed", "Evaluated", "Ready"]).order_by('-updated_at')
             if book_slug:
                 module_attempts = module_attempts.filter(
                     module__test__book__slug=book_slug)
@@ -68,7 +67,7 @@ class Student(SlugifiedBaseModal):
                 for attempt in module_attempts:
                     recent_tests.append({
                         'status': attempt.status,
-                        'created_at': attempt.created_at,
+                        'updated_at': attempt.updated_at,  # Keep as datetime object for sorting
                         'module': module,
                         'score': attempt.bands,
                         'attempt_slug': attempt.slug,
@@ -78,13 +77,17 @@ class Student(SlugifiedBaseModal):
                         'book_slug': attempt.module.test.book.slug,
                     })
 
-        # Sort all attempts by created_at
+        # Sort all attempts by updated_at as datetime object
         sorted_attempts = sorted(
-            recent_tests, key=lambda x: x['created_at'], reverse=True)
+            recent_tests, key=lambda x: x['updated_at'], reverse=True)
 
+        # Convert updated_at to string after sorting
+        for attempt in sorted_attempts:
+            attempt['updated_at'] = attempt['updated_at'].strftime("%b %d, %Y")
+
+        # Apply total limit
         if total_limit:
-            # Limit the number of items to a maximum of 10
-            sorted_attempts = sorted_attempts[:15]
+            sorted_attempts = sorted_attempts[:total_limit]
 
         return sorted_attempts
 
@@ -147,6 +150,7 @@ class Student(SlugifiedBaseModal):
 
 
 # Function to round off a number to the nearest 0.5
+
 
     @property
     def fifteen_days_chart(self):

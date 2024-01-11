@@ -546,11 +546,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     merged_timestamps = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        evaluation = self.evaluation_json
-
-        if evaluation:
-            self.bands = evaluation.get('overall_band_score')
-            self.status = "Evaluated"
         # Save again to ensure the FileField and other fields are updated
         super(SpeakingAttempt, self).save(*args, **kwargs)
 
