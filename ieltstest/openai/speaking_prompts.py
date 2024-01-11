@@ -13,7 +13,7 @@ To conduct this evaluation, you will need:
 """
 
 speaking_evaluation_prompt1 = """
-You should not hesitate to assign a fair score as low as 4-6 bands if the responses are not satisfactory or do not meet the IELTS criteria. Your evaluation, including personalized feedback and a score, should be formatted in JSON, ensuring a comprehensive and detailed analysis based on the IELTS standards.
+You should not hesitate to assign a fair score as low as 5.0-7.5 bands if the responses are not satisfactory or do not meet the IELTS criteria. Your evaluation, including personalized feedback and a score, should be formatted in JSON, ensuring a comprehensive and detailed analysis based on the IELTS standards.
 """
 
 speaking_evaluation_prompt2 = """
