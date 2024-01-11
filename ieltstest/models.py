@@ -547,6 +547,11 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     merged_timestamps = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        evaluation = self.evaluation_json
+
+        if evaluation:
+            self.bands = evaluation.get('overall_band_score')
+
         # Save again to ensure the FileField and other fields are updated
         super(SpeakingAttempt, self).save(*args, **kwargs)
 
@@ -817,7 +822,6 @@ def check_answers(attempt):
     return attempt
 
 
-
 def get_listening_ielts_score(correct, total=40):
     score = int((correct/total)*40)
     score_map = {
@@ -976,7 +980,7 @@ def openai_get_writing_evaluation(attempt, section):
         input=prompt,
         response=evaluation,
     )
-    
+
     return evaluation
 
 

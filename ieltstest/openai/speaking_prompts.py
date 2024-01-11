@@ -9,8 +9,6 @@ To conduct this evaluation, you will need:
 2. A list of questions asked during the test.
 3. The transcribed text of the test taker's responses.
 
-Your feedback and scoring should be formatted in JSON, reflecting a rigorous and detailed assessment based on the IELTS criteria.
-
 {data}
 
 Provide your response in the JSON format only, in the following keys: overall_band_score (decimal),fluency_and_coherence_bands (decimal), grammatical_range_and_accuracy_bands (decimal) , lexical_resource_bands (decimal), pronunciation_bands (decimal), overall_personalized_feedback_suggestions (string/100-200 words), word_choice_suggestions (Python List 3/4 points/150-250 words).
