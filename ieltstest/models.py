@@ -929,7 +929,7 @@ Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
 
-    messages = [SystemMessage(content=prompt), HumanMessage(
+    messages = [HumanMessage(content=prompt), HumanMessage(
         content=speaking_prompts.speaking_evaluation_prompt1), HumanMessage(content=speaking_prompts.speaking_evaluation_prompt2)]
 
     evaluation = chat_model.invoke(messages).content
