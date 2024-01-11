@@ -1,5 +1,5 @@
 from django.contrib import admin
-from base.models import Issue, CommentMain, CommentItem
+from base.models import Issue, CommentMain, CommentItem, AiResponse
 
 
 class IssueAdmin(admin.ModelAdmin):
@@ -20,5 +20,12 @@ class CommentMainAdmin(admin.ModelAdmin):
     search_fields = ('unique_id',)
 
 
+class AiResponseAdmin(admin.ModelAdmin):
+    list_display = ('info', 'status')
+    list_filter = ('status',)
+    search_fields = ('info', 'status')
+
+
 admin.site.register(Issue, IssueAdmin)
 admin.site.register(CommentMain, CommentMainAdmin)
+admin.site.register(AiResponse, AiResponseAdmin)

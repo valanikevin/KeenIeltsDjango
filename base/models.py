@@ -34,3 +34,19 @@ class CommentItem(TimestampedBaseModel):
 
     def __str__(self):
         return f'{self.user.email} | {self.comment}'
+
+
+class AiResponse(TimestampedBaseModel):
+    STATUS = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    )
+    status = models.CharField(
+        max_length=100, choices=STATUS, default='pending')
+    info = models.CharField(
+        max_length=500, help_text="Info about this AI response")
+    input = models.TextField(help_text="Input to the AI")
+    response = models.TextField(help_text="Response from the AI")
+
+    def __str__(self):
+        return f'{self.info} '
