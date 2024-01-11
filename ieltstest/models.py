@@ -582,15 +582,15 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
 
     def send_evaluation_email(self):
         message = f"""
-    Hi {self.user.first_name},
-    Your KeenIELTS speaking test result is now available on your account. To view your results, please log in to your account.
+Hi {self.user.first_name},
+Your KeenIELTS speaking test result is now available on your account. To view your results, please log in to your account.
 
-    Test ID: {self.slug}
-    Book Name: {self.module.test.book.name}
-    Test Name: {self.module.test.name}
+Test ID: {self.slug}
+Book Name: {self.module.test.book.name}
+Test Name: {self.module.test.name}
 
-    Regards,
-    Team KeenIELTS
+Regards,
+Team KeenIELTS
     """
 
         send_mail(
