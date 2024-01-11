@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
             # Evaluate Audio using OpenAI
             attempt.get_evaluation()
-            attempt.status = 'Ready'
+            attempt.status = 'Verify Bands'
             attempt.save()
 
             # Send email

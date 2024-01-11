@@ -83,9 +83,11 @@ class IndividualModuleAttemptAbstract(TimestampedBaseModel, SlugifiedBaseModal):
         ('Not Started', 'Not Started'),
         ('In Progress', 'In Progress'),
         ('Completed', 'Completed'),
-        ('Evaluated', 'Evaluated'),
+        ('Verify Bands', 'Verify Bands'),
         ('Ready', 'Ready'),
+        ('Evaluated', 'Evaluated'),
     )
+
     status = models.CharField(
         choices=STATUS, help_text='What is currect status of this attempt?', default='Not Started')
     user = models.ForeignKey(
@@ -545,12 +547,23 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
     merged_timestamps = models.JSONField(null=True, blank=True)
+    fluency_and_coherence_bands = models.FloatField(default=0.0, )
+    grammatical_range_and_accuracy_bands = models.FloatField(default=0.0, )
+    lexical_resource_bands = models.FloatField(default=0.0, )
+    pronunciation_bands = models.FloatField(default=0.0, )
 
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
 
         if evaluation:
             self.bands = evaluation.get('overall_band_score')
+            self.fluency_and_coherence_bands = evaluation.get(
+                'fluency_and_coherence_bands')
+            self.grammatical_range_and_accuracy_bands = evaluation.get(
+                'grammatical_range_and_accuracy_bands')
+            self.lexical_resource_bands = evaluation.get(
+                'lexical_resource_bands')
+            self.pronunciation_bands = evaluation.get('pronunciation_bands')
 
         # Save again to ensure the FileField and other fields are updated
         super(SpeakingAttempt, self).save(*args, **kwargs)
@@ -936,7 +949,8 @@ Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
 
     AiResponse.objects.create(
         category="speaking",
-        input=prompt,
+        input=prompt + speaking_prompts.speaking_evaluation_prompt1 +
+        speaking_prompts.speaking_evaluation_prompt2,
         response=evaluation,
     )
 
@@ -978,7 +992,7 @@ def openai_get_writing_evaluation(attempt, section):
     evaluation = chat_model.invoke(messages).content
 
     AiResponse.objects.create(
-        category="speaking",
+        category="writing",
         input=prompt,
         response=evaluation,
     )
