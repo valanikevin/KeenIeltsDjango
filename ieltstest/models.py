@@ -554,7 +554,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
     merged_timestamps = models.JSONField(null=True, blank=True)
-    
 
     def save(self, *args, **kwargs):
         evaluation = self.evaluation_json
@@ -578,7 +577,6 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     @property
     def bands_description(self):
         return ielts_speaking_bands_description.get(self.bands)
-
 
     def send_evaluation_email(self):
         message = f"""
@@ -958,29 +956,26 @@ def openai_get_speaking_evaluation(attempt):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
     chat_model = ChatOpenAI(
-        temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        temperature=0.9, model_name="gpt-3.5-turbo-16k")
 
     data = ""
     for audio in attempt.audios:
-        question_list = [
-            question.question for question in audio.section.questions]
 
         data = data + f"""
-IELTS Speaking Part: {audio.section.section},
-Questions Asked: {question_list},
-Test Taker Audio Transcript: {audio.audio_to_text()}\n\n
+{audio.section.section},
+{audio.audio_to_text()}\n\n
 """
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
 
     messages = [SystemMessage(content=prompt), HumanMessage(
-        content=speaking_prompts.speaking_evaluation_prompt1), HumanMessage(content=speaking_prompts.speaking_evaluation_prompt2)]
+        content=speaking_prompts.speaking_evaluation_prompt2)]
 
     evaluation = chat_model.invoke(messages).content
 
     AiResponse.objects.create(
         category="speaking",
-        input=prompt + speaking_prompts.speaking_evaluation_prompt1 +
+        input=prompt +
         speaking_prompts.speaking_evaluation_prompt2,
         response=evaluation,
     )

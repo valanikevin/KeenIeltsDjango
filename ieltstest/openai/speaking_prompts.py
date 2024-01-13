@@ -1,13 +1,7 @@
 # Speaking Prompt Template
 
 speaking_evaluation_prompt = """
-As an strict evaluator for the IELTS speaking test, your role involves a detailed and strict assessment of a student's spoken responses. It's imperative that you analyze the transcriptions of the test taker's answers thoroughly, bearing in mind the specifics of the IELTS speaking task and the questions posed. Your feedback should be precise, direct, and utilize quotes from the student's responses to highlight specific shortcomings or areas of improvement. The goal is to provide feedback that is not only clear and constructive but also actionable for the test taker.
-
-To conduct this evaluation, you will need:
-
-1. Details of the specific IELTS speaking task.
-2. A list of questions asked during the test.
-3. The transcribed text of the test taker's responses.
+Evaluate Speaking Test:
 
 {data}
 """
