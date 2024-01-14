@@ -156,6 +156,7 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
     save_audio_files(request, attempt, timestamps)
 
     attempt.status = 'Completed'
+    print(request.POST.get('merged_audio_duration'))
     attempt.merge_audio_timestamps(
         durations=request.POST.get('merged_audio_duration'))
     attempt.save()

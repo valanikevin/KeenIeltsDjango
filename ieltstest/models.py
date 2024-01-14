@@ -632,7 +632,7 @@ Team KeenIELTS
             attempt=self).order_by('section__section')
 
     def merge_audio_timestamps(self, durations):
-        durations = convert_to_dict(durations)
+        durations = json.loads(durations)
 
         # Initialize an empty AudioSegment object
         audio_length = 0
@@ -646,7 +646,8 @@ Team KeenIELTS
                 timestamps[stamp] = timestamp_secs
                 timestamp_secs = timestamp_secs + \
                     audio.timestamps.get(stamp).get('elapsedTime')
-            _audio_length = durations.get(int(audio.section.id))
+            _audio_length = durations.get(str(audio.section.id))
+
             audio_length = audio_length + _audio_length
             timestamp_secs = audio_length
 
