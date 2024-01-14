@@ -180,7 +180,7 @@ def save_audio_files(request, attempt, timestamps):
         # Handle the merged audio separately if needed
         if section_id == "merged_audio":
             attempt.merged_audio.save(
-                f'{attempt.slug}.wav', ContentFile(audio_blob.read()))
+                f'{attempt.slug}.mp3', ContentFile(audio_blob.read()))
         else:
             # Find the corresponding SpeakingSection
             section = SpeakingSection.objects.get(id=int(section_id))
@@ -194,7 +194,7 @@ def save_audio_files(request, attempt, timestamps):
 
             # Save the audio file in WAV format
             speaking_audio.audio.save(
-                f'{section_id}.wav', ContentFile(audio_blob.read()))
+                f'{section_id}.mp3', ContentFile(audio_blob.read()))
 
     return True
 
