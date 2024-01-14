@@ -968,7 +968,7 @@ def openai_get_speaking_evaluation(attempt):
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
 
-    messages = [SystemMessage(content=prompt), HumanMessage(
+    messages = [HumanMessage(content=prompt), HumanMessage(
         content=speaking_prompts.speaking_evaluation_prompt2)]
 
     evaluation = chat_model.invoke(messages).content
@@ -1003,7 +1003,7 @@ def openai_get_writing_evaluation(attempt, section):
     OPENAI_KEY = settings.OPENAI_SECRET
     os.environ["OPENAI_API_KEY"] = OPENAI_KEY
     chat_model = ChatOpenAI(
-        temperature=0.6, model_name="gpt-3.5-turbo-16k")
+        temperature=0.9, model_name="gpt-3.5-turbo-16k")
 
     answer = attempt.answers.get(str(section.id))
     word_count = len(answer.split())
@@ -1013,7 +1013,7 @@ def openai_get_writing_evaluation(attempt, section):
 
     prompt = writing_prompts.writing_evaluation_prompt.format(
         task=section.section, question=section.questions, answer=answer)
-    messages = [SystemMessage(content=prompt)]
+    messages = [HumanMessage(content=prompt)]
 
     evaluation = chat_model.invoke(messages).content
 

@@ -177,18 +177,24 @@ def parse_post_data(request):
 
 def save_audio_files(request, attempt, timestamps):
     for section_id, audio_blob in request.FILES.items():
+        # Handle the merged audio separately if needed
         if section_id == "merged_audio":
             attempt.merged_audio.save(
-                f'{attempt.slug}.mp3', ContentFile(audio_blob.read()))
+                f'{attempt.slug}.wav', ContentFile(audio_blob.read()))
         else:
+            # Find the corresponding SpeakingSection
             section = SpeakingSection.objects.get(id=int(section_id))
+
+            # Update or create the SpeakingAttemptAudio entry
             speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
                 section=section,
                 attempt=attempt,
                 defaults={'timestamps': timestamps.get(int(section_id))}
             )
+
+            # Save the audio file in WAV format
             speaking_audio.audio.save(
-                f'{section_id}.mp3', ContentFile(audio_blob.read()))
+                f'{section_id}.wav', ContentFile(audio_blob.read()))
 
     return True
 
