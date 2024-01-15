@@ -3,9 +3,9 @@ from base.models import Issue, CommentMain, CommentItem, AiResponse
 
 
 class IssueAdmin(admin.ModelAdmin):
-    list_display = ('user', 'type', 'description')
-    list_filter = ('user', 'type')
-    search_fields = ('user', 'type')
+    list_display = ('type', 'description')
+    list_filter = ('type',)
+    search_fields = ('type',)
 
 
 class CommentItemInline(admin.StackedInline):

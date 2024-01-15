@@ -7,7 +7,6 @@ from base.serializers import CommentMainSerializer
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def report_mistake(request):
     type = request.data['issueType']
     description = request.data['issueDescription']
@@ -16,7 +15,6 @@ def report_mistake(request):
     issue = Issue.objects.create(
         type=type,
         description=description,
-        user=request.user,
         url=url
     )
 
