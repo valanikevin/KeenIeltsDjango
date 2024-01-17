@@ -157,8 +157,8 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 
     attempt.status = 'Completed'
     print(request.POST.get('merged_audio_duration'))
-    attempt.merge_audio_timestamps(
-        durations=request.POST.get('merged_audio_duration'))
+    # attempt.merge_audio_timestamps(
+    #     durations=request.POST.get('merged_audio_duration'))
     attempt.save()
 
     data = {'status': attempt.status}
@@ -168,7 +168,7 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 def parse_post_data(request):
     timestamps = {}
     for key, value in request.POST.items():
-        if key != 'attempt_type' and key != 'merged_audio_duration':
+        if key != 'attempt_type' and key != 'fullAudio':
             main_key, nested_key = key.split(',')
             timestamps.setdefault(int(main_key), {})[
                 int(nested_key)] = json.loads(value)
@@ -179,9 +179,9 @@ def parse_post_data(request):
 def save_audio_files(request, attempt, timestamps):
     for section_id, audio_blob in request.FILES.items():
         # Handle the merged audio separately if needed
-        if section_id == "merged_audio":
+        if section_id == "fullAudio":
             attempt.merged_audio.save(
-                f'{attempt.slug}.mp3', ContentFile(audio_blob.read()))
+                f'{attempt.slug}.wav', ContentFile(audio_blob.read()))
         else:
             # Find the corresponding SpeakingSection
             section = SpeakingSection.objects.get(id=int(section_id))
