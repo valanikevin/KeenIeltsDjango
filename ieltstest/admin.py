@@ -169,6 +169,7 @@ class SpeakingModuleAdmin(ModuleAdmin):
 
 class AttemptAdmin(admin.ModelAdmin):
     list_display = ['user', 'book_name', 'module', 'slug', 'status', 'bands']
+    list_filter = ['status']
 
     class Meta:
         abstract = True

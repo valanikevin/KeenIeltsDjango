@@ -161,10 +161,11 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 
     timestamps = parse_post_data(request)
 
-    save_audio_files(request, attempt, timestamps)
+    save_audio_files(request, attempt)
+
+    attempt.merge_audio_timestamps(timestamps)
 
     attempt.status = 'Completed'
-    print(request.POST.get('merged_audio_duration'))
 
     attempt.save()
 
@@ -174,13 +175,18 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 
 def parse_post_data(request):
     timestamps = {}
+    _timestamps = {}
     for key, value in request.POST.items():
         if key != 'attempt_type' and key != 'fullAudio':
             main_key, nested_key = key.split(',')
             timestamps.setdefault(int(main_key), {})[
                 int(nested_key)] = json.loads(value)
 
-    return timestamps
+    for item in timestamps:
+        for time in timestamps[item]:
+            _timestamps[time] = timestamps[item][time]['elapsedTime']
+
+    return _timestamps
 
 
 def convert_wav_to_mp3(blob):
@@ -211,10 +217,8 @@ def convert_wav_to_mp3(blob):
     return ContentFile(mp3_content)
 
 
-# Rest of your save_audio_files function...
 
-
-def save_audio_files(request, attempt, timestamps):
+def save_audio_files(request, attempt):
     for section_id, audio_blob in request.FILES.items():
         if section_id == "fullAudio":
             mp3_audio = convert_wav_to_mp3(audio_blob)
@@ -225,10 +229,9 @@ def save_audio_files(request, attempt, timestamps):
             speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
                 section=section,
                 attempt=attempt,
-                defaults={'timestamps': timestamps.get(int(section_id))}
             )
 
-            mp3_audio = convert_webm_to_mp3(audio_blob)
+            mp3_audio = convert_wav_to_mp3(audio_blob)
             speaking_audio.audio.save(
                 f'{section_id}.mp3', ContentFile(mp3_audio.read()))
 

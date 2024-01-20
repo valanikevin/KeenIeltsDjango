@@ -553,6 +553,9 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
+    audio_text = models.TextField(
+        null=True, blank=True, help_text='Text converted from the original audio')
+
     merged_timestamps = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -573,6 +576,20 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
             self.is_email_sent = True
 
         super(SpeakingAttempt, self).save(*args, **kwargs)
+
+    def audio_to_text(self):
+        if not self.audio_text:
+            key_name = "whisper_model"
+            if cache.get(key_name):
+                model = cache.get(key_name)
+            else:
+                model = whisper.load_model("tiny")
+                cache.set(key_name, model, settings.CACHE_TTL)
+
+            result = model.transcribe(self.merged_audio.path)
+            self.audio_text = result["text"]
+            self.save()
+        return self.audio_text
 
     @property
     def bands_description(self):
@@ -631,30 +648,16 @@ Team KeenIELTS
         return SpeakingAttemptAudio.objects.filter(
             attempt=self).order_by('section__section')
 
-    def merge_audio_timestamps(self, durations):
-        durations = json.loads(durations)
+    def merge_audio_timestamps(self, timestamps):
+        merged_timestamps = {}
+        current_time = 0
+        for question in timestamps:
+            merged_timestamps[question] = current_time
+            current_time = current_time+int(timestamps[question])
 
-        # Initialize an empty AudioSegment object
-        audio_length = 0
-        timestamp_secs = 0
-        timestamps = {}
-
-        audios = self.audios.all()
-
-        for audio in audios:
-            for stamp in audio.timestamps:
-                timestamps[stamp] = timestamp_secs
-                timestamp_secs = timestamp_secs + \
-                    audio.timestamps.get(stamp).get('elapsedTime')
-            _audio_length = durations.get(str(audio.section.id))
-
-            audio_length = audio_length + _audio_length
-            timestamp_secs = audio_length
-
-        self.merged_timestamps = timestamps
-
+        self.merged_timestamps = merged_timestamps
         self.save()
-        return self
+        return merged_timestamps
 
 
 class SpeakingAttemptAudio(models.Model):
@@ -959,12 +962,9 @@ def openai_get_speaking_evaluation(attempt):
     chat_model = ChatOpenAI(
         temperature=0.9, model_name="gpt-3.5-turbo-16k")
 
-    data = ""
-    for audio in attempt.audios:
-
-        data = data + f"""
-{audio.section.section},
-{audio.audio_to_text()}\n\n
+    data = f"""
+Full Test Transcript:\n
+{attempt.audio_to_text()}\n\n
 """
 
     prompt = speaking_prompts.speaking_evaluation_prompt.format(data=data)
