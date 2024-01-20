@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         print("Evaluating all speaking attempts")
-        attempts = SpeakingAttempt.objects.filter(status='Completed')
+        attempts = SpeakingAttempt.objects.filter(internal_status='Completed')
 
         for attempt in attempts:
             print(f'Attempt: {attempt.slug}')
@@ -22,7 +22,8 @@ class Command(BaseCommand):
 
             # Evaluate Audio using OpenAI
             attempt.get_evaluation()
-            attempt.status = 'Verify Bands'
+            attempt.internal_status = 'Ready'
+            attempt.status = 'Ready'
             attempt.save()
 
         print("Evaluted all speaking attempts")

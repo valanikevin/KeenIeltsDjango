@@ -544,12 +544,15 @@ class SpeakingSectionQuestion(PriorityBaseModal):
 
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
     INTERNAL_STATUS = (
+        ('Created', 'Created'),
         ('Completed', 'Completed'),
         ('Transcribed', 'Transcribed'),
         ('Evaluated', 'Evaluated'),
+        ('Verify Bands', 'Verify Bands'),
         ('Ready', 'Ready'),
     )
-    internal_status = models.CharField(max_length=200, choices=INTERNAL_STATUS, default='Completed')
+    internal_status = models.CharField(
+        max_length=200, choices=INTERNAL_STATUS, default='Created')
     fluency_and_coherence_bands = models.FloatField(default=0.0, )
     grammatical_range_and_accuracy_bands = models.FloatField(default=0.0, )
     lexical_resource_bands = models.FloatField(default=0.0, )
@@ -577,6 +580,9 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
             self.lexical_resource_bands = evaluation.get(
                 'lexical_resource_bands')
             self.pronunciation_bands = evaluation.get('pronunciation_bands')
+
+        if self.internal_status == "Ready" and self.status != "Ready":
+            self.status = "Ready"
 
         if self.is_email_sent == False and self.status == "Ready":
             self.send_evaluation_email()
@@ -660,7 +666,6 @@ Team KeenIELTS
         self.merged_timestamps = merged_timestamps
         self.save()
         return merged_timestamps
-
 
 
 class FullTestAttempt(IndividualModuleAttemptAbstract):

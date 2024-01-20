@@ -166,6 +166,7 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
     attempt.merge_audio_timestamps(timestamps)
 
     attempt.status = 'Completed'
+    attempt.internal_status = 'Completed'
 
     attempt.save()
 
