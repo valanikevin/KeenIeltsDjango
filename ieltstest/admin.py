@@ -1,5 +1,5 @@
 from django.contrib import admin
-from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection, SpeakingSectionQuestion, SpeakingAttemptAudio, FullTestAttempt, CoachingInstitute
+from ieltstest.models import Test, ListeningSection, ListeningModule, Book, ListeningAttempt, QuestionType, ReadingModule, ReadingSection, ReadingAttempt, WritingAttempt, WritingModule, WritingSection, SpeakingAttempt, SpeakingModule, SpeakingSection, SpeakingSectionQuestion, FullTestAttempt, CoachingInstitute
 
 
 # Inlines
@@ -65,9 +65,6 @@ class SpeakingSectionQuestionInline(admin.StackedInline):
     extra = 3
 
 
-class SpeakingAttemptAudioInline(admin.StackedInline):
-    model = SpeakingAttemptAudio
-    show_change_link = True
 
 # Admins
 
@@ -190,9 +187,6 @@ class WritingAttemptAdmin(AttemptAdmin):
     pass
 
 
-class SpeakingAttemptAdmin(AttemptAdmin):
-    inlines = [SpeakingAttemptAudioInline,]
-
 
 class FullTestAttemptAdmin(AttemptAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
@@ -220,7 +214,6 @@ admin.site.register(WritingAttempt, WritingAttemptAdmin)
 # Speaking
 admin.site.register(SpeakingModule, SpeakingModuleAdmin)
 admin.site.register(SpeakingSection, SpeakingSectionAdmin)
-admin.site.register(SpeakingAttempt, SpeakingAttemptAdmin)
 
 # Full Test
 admin.site.register(FullTestAttempt, FullTestAttemptAdmin)

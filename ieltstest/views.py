@@ -4,7 +4,7 @@ from ieltstest.variables import get_individual_test_obj_serializer_from_slug, ge
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerializer, GetBookSerializer
-from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
+from ieltstest.models import Book, Test, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
 import io
@@ -224,16 +224,6 @@ def save_audio_files(request, attempt):
             mp3_audio = convert_wav_to_mp3(audio_blob)
             attempt.merged_audio.save(
                 f'{attempt.slug}.mp3', ContentFile(mp3_audio.read()))
-        else:
-            section = SpeakingSection.objects.get(id=int(section_id))
-            speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
-                section=section,
-                attempt=attempt,
-            )
-
-            mp3_audio = convert_wav_to_mp3(audio_blob)
-            speaking_audio.audio.save(
-                f'{section_id}.mp3', ContentFile(mp3_audio.read()))
 
     return True
 

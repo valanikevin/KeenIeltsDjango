@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, SpeakingAttemptAudio, FullTestAttempt, CoachingInstitute
+from ieltstest.models import Book, ListeningModule, Test, ListeningSection, ListeningAttempt, ReadingModule, ReadingSection, ReadingAttempt, WritingModule, WritingSection, WritingAttempt, SpeakingModule, SpeakingAttempt, SpeakingSection, SpeakingSectionQuestion, QuestionType, FullTestAttempt, CoachingInstitute
 from django.conf import settings
 from KeenIeltsDjango.utils import imgix_url, audio_url
 
@@ -236,20 +236,7 @@ class WritingAttemptSerializer(AttemptSerializer):
         fields = '__all__'
 
 
-class SpeakingAttemptAudioSerializer(serializers.ModelSerializer):
-    audio = serializers.SerializerMethodField()
-
-    def get_audio(self, obj):
-        url = f'{audio_url(obj.audio.url)}'
-        return url
-
-    class Meta:
-        model = SpeakingAttemptAudio
-        fields = '__all__'
-
-
 class SpeakingAttemptSerializer(AttemptSerializer):
-    audios = SpeakingAttemptAudioSerializer(many=True, read_only=True)
     merged_audio = serializers.SerializerMethodField()
 
     def get_merged_audio(self, obj):

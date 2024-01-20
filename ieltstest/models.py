@@ -643,11 +643,6 @@ Team KeenIELTS
     def evaluation_json_section(self):
         return eval(str(self.evaluation_json))
 
-    @property
-    def audios(self):
-        return SpeakingAttemptAudio.objects.filter(
-            attempt=self).order_by('section__section')
-
     def merge_audio_timestamps(self, timestamps):
         merged_timestamps = {}
         current_time = 0
@@ -659,35 +654,6 @@ Team KeenIELTS
         self.save()
         return merged_timestamps
 
-
-class SpeakingAttemptAudio(models.Model):
-    attempt = models.ForeignKey(
-        SpeakingAttempt, help_text='Select attempt for this audio', on_delete=models.CASCADE)
-    section = models.ForeignKey(
-        SpeakingSection, on_delete=models.CASCADE, help_text='Select parent speaking section')
-    audio = models.FileField(
-        help_text='Add Audio file for the speaking attempt')
-    audio_text = models.TextField(
-        null=True, blank=True, help_text='Text converted from the original audio')
-    timestamps = models.JSONField(
-        null=True, help_text='Timestamps for each question in the audio', blank=True)
-
-    def __str__(self):
-        return self.attempt.slug
-
-    def audio_to_text(self):
-        if not self.audio_text:
-            key_name = "whisper_model"
-            if cache.get(key_name):
-                model = cache.get(key_name)
-            else:
-                model = whisper.load_model("tiny")
-                cache.set(key_name, model, settings.CACHE_TTL)
-            model = whisper.load_model("tiny")
-            result = model.transcribe(self.audio.path)
-            self.audio_text = result["text"]
-            self.save()
-        return self.audio_text
 
 
 class FullTestAttempt(IndividualModuleAttemptAbstract):
