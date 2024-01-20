@@ -543,6 +543,13 @@ class SpeakingSectionQuestion(PriorityBaseModal):
 
 
 class SpeakingAttempt(IndividualModuleAttemptAbstract):
+    INTERNAL_STATUS = (
+        ('Completed', 'Completed'),
+        ('Transcribed', 'Transcribed'),
+        ('Evaluated', 'Evaluated'),
+        ('Ready', 'Ready'),
+    )
+    internal_status = models.CharField(max_length=200, choices=INTERNAL_STATUS, default='Completed')
     fluency_and_coherence_bands = models.FloatField(default=0.0, )
     grammatical_range_and_accuracy_bands = models.FloatField(default=0.0, )
     lexical_resource_bands = models.FloatField(default=0.0, )
