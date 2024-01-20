@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render
 from ieltstest.variables import get_individual_test_obj_serializer_from_slug, get_module_attempt_from_slug
 from rest_framework.decorators import api_view, permission_classes
@@ -6,12 +7,19 @@ from ieltstest.serializers import BookModuleSerializer, FullTestAttemptSerialize
 from ieltstest.models import Book, Test, SpeakingAttemptAudio, WritingAttempt, SpeakingSection, SpeakingAttempt, WritingSection, FullTestAttempt, FullTestAttempt, SpeakingSectionQuestion
 from rest_framework.permissions import IsAuthenticated
 import json
+import io
+import os
 import re
 import openai
 from django.conf import settings
 from ieltstest.openai import writing_prompts
 from django.core import serializers
+from moviepy.editor import AudioFileClip
+from io import BytesIO
+import tempfile
+from moviepy.editor import AudioFileClip
 from django.core.files.base import ContentFile
+import subprocess
 
 
 def ieltstest(request):
@@ -157,8 +165,7 @@ def update_attempt_speaking(request, attempt_slug, module_type='speaking'):
 
     attempt.status = 'Completed'
     print(request.POST.get('merged_audio_duration'))
-    # attempt.merge_audio_timestamps(
-    #     durations=request.POST.get('merged_audio_duration'))
+
     attempt.save()
 
     data = {'status': attempt.status}
@@ -176,26 +183,54 @@ def parse_post_data(request):
     return timestamps
 
 
+def convert_wav_to_mp3(blob):
+    # Create a temporary file for the input WAV file
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
+        # Write the blob to the temporary file
+        for chunk in blob.chunks():
+            temp_wav.write(chunk)
+        temp_wav.flush()  # Ensure all data is written to the file
+        input_path = temp_wav.name
+
+    # Define the output path for the MP3 file (also temporary)
+    output_path = tempfile.mktemp(suffix='.mp3')
+
+    # Use ffmpeg to convert WAV to MP3
+    subprocess.run(['ffmpeg', '-i', input_path, '-vn', '-ar', '44100',
+                   '-ac', '2', '-b:a', '192k', output_path], check=True)
+
+    # Read the converted MP3 file
+    with open(output_path, 'rb') as mp3_file:
+        mp3_content = mp3_file.read()
+
+    # Clean up temporary files
+    os.remove(input_path)
+    os.remove(output_path)
+
+    # Return the MP3 content in a format that can be saved
+    return ContentFile(mp3_content)
+
+
+# Rest of your save_audio_files function...
+
+
 def save_audio_files(request, attempt, timestamps):
     for section_id, audio_blob in request.FILES.items():
-        # Handle the merged audio separately if needed
         if section_id == "fullAudio":
+            mp3_audio = convert_wav_to_mp3(audio_blob)
             attempt.merged_audio.save(
-                f'{attempt.slug}.wav', ContentFile(audio_blob.read()))
+                f'{attempt.slug}.mp3', ContentFile(mp3_audio.read()))
         else:
-            # Find the corresponding SpeakingSection
             section = SpeakingSection.objects.get(id=int(section_id))
-
-            # Update or create the SpeakingAttemptAudio entry
             speaking_audio, created = SpeakingAttemptAudio.objects.update_or_create(
                 section=section,
                 attempt=attempt,
                 defaults={'timestamps': timestamps.get(int(section_id))}
             )
 
-            # Save the audio file in WAV format
+            mp3_audio = convert_webm_to_mp3(audio_blob)
             speaking_audio.audio.save(
-                f'{section_id}.mp3', ContentFile(audio_blob.read()))
+                f'{section_id}.mp3', ContentFile(mp3_audio.read()))
 
     return True
 
