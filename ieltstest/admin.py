@@ -65,7 +65,6 @@ class SpeakingSectionQuestionInline(admin.StackedInline):
     extra = 3
 
 
-
 # Admins
 
 
@@ -160,6 +159,16 @@ class WritingModuleAdmin(ModuleAdmin):
     inlines = [WritingSectionInline]
 
 
+class WritingSectionAdmin(SectionAdmin):
+
+    def get_list_display(self, request):
+        # Include base class list_display and add custom fields
+        return super(WritingSectionAdmin, self).get_list_display(request) + ['name',  'book_name']
+
+    def book_name(self, obj):
+        return obj.writing_module.test.book.name
+
+
 class SpeakingModuleAdmin(ModuleAdmin):
     inlines = [SpeakingSectionInline]
 
@@ -187,7 +196,6 @@ class WritingAttemptAdmin(AttemptAdmin):
     pass
 
 
-
 class FullTestAttemptAdmin(AttemptAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
 
@@ -208,7 +216,7 @@ admin.site.register(ReadingAttempt, ReadingAttemptAdmin)
 
 # Writing
 admin.site.register(WritingModule, WritingModuleAdmin)
-admin.site.register(WritingSection, SectionAdmin)
+admin.site.register(WritingSection, WritingSectionAdmin)
 admin.site.register(WritingAttempt, WritingAttemptAdmin)
 
 # Speaking

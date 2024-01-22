@@ -54,3 +54,11 @@ class AiResponse(TimestampedBaseModel):
 
     def __str__(self):
         return f'{self.category} '
+
+
+class Storage(TimestampedBaseModel):
+    name = models.CharField(max_length=100)
+    file = models.FileField(upload_to='media/')
+
+    def __str__(self):
+        return f'{self.name}'
