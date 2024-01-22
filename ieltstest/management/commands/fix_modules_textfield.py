@@ -73,7 +73,8 @@ class Command(BaseCommand):
             "localhost",
             "localhost:8000",
             "keenielts.com",
-            "192.168.10.55:8000"
+            "192.168.10.55:8000",
+            "keenielts-django.imgix.net",
         ]
 
         for img in images:

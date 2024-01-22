@@ -58,7 +58,7 @@ class AiResponse(TimestampedBaseModel):
 
 class Storage(TimestampedBaseModel):
     name = models.CharField(max_length=100)
-    file = models.FileField(upload_to='media/')
+    file = models.FileField(upload_to='storage/')
 
     def __str__(self):
         return f'{self.name}'

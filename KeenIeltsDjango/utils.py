@@ -9,7 +9,7 @@ def imgix_url(url, complete=True):
         else:
             return url
     else:
-        return 'https://keenielts-django.imgix.net/' + url
+        return 'https://keenielts-django.imgix.net' + url
 
 
 def audio_url(url, complete=True):
