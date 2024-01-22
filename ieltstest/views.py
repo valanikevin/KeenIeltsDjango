@@ -240,7 +240,9 @@ def get_attempt(request, module_type, attempt_slug):
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
     attempt = IndividualModuleAttempt.objects.get(slug=attempt_slug)
+    print(f'Status: {attempt.status}')
     if attempt.status == "Ready":
+        attempt.internal_status = "Evaluated"
         attempt.status = "Evaluated"
         attempt.save()
     serializer = IndividualModuleAttemptSerializer(attempt,  many=False)
