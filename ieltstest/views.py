@@ -69,7 +69,7 @@ def find_smart_test_from_book(request, module_type, book_slug):
         module_type)
 
     modules = IndividualModule.objects.filter(
-        test__book__slug=book_slug)
+        test__book__slug=book_slug, status="published")
 
     # Get the slugs of modules that the user has already attempted
     attempted_module_slugs = IndividualModuleAttempt.objects.filter(
@@ -104,7 +104,7 @@ def find_smart_test_from_module(request, module_type):
         module_type)
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
-    modules = IndividualModule.objects.order_by('?')
+    modules = IndividualModule.objects.filter(status="published").order_by('?')
 
     if modules.exists():
         selected_module = modules.first()
@@ -216,7 +216,6 @@ def convert_wav_to_mp3(blob):
 
     # Return the MP3 content in a format that can be saved
     return ContentFile(mp3_content)
-
 
 
 def save_audio_files(request, attempt):

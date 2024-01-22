@@ -705,7 +705,7 @@ class FullTestAttempt(IndividualModuleAttemptAbstract):
 
             if not getattr(self, field_name):
                 modules = IndividualModule.objects.filter(
-                    test__book__slug=book_slug)
+                    test__book__slug=book_slug, status="published")
 
                 if specific_test:
                     selected_module = modules.filter(test__slug=specific_test)
