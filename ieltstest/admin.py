@@ -197,7 +197,9 @@ class WritingAttemptAdmin(AttemptAdmin):
 
 
 class SpeakingAttemptAdmin(AttemptAdmin):
-    pass
+    list_display = ['user', 'book_name', 'module',
+                    'slug', 'status', 'internal_status', 'bands']
+    list_filter = ['status', 'internal_status']
 
 
 class FullTestAttemptAdmin(AttemptAdmin):

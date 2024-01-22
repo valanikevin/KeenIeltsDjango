@@ -10,15 +10,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         print("Evaluating all speaking attempts")
-        attempts = SpeakingAttempt.objects.filter(internal_status='Completed')
+        attempts = SpeakingAttempt.objects.filter(
+            internal_status='Completed', status='Completed')
 
         for attempt in attempts:
             print(f'Attempt: {attempt.slug}')
             # Evaluate Audio
 
             # Speech to text using Whisper
-            for audio in attempt.audios.all():
-                audio.audio_to_text()
+            attempt.audio_to_text()
 
             # Evaluate Audio using OpenAI
             attempt.get_evaluation()
@@ -27,4 +27,3 @@ class Command(BaseCommand):
             attempt.save()
 
         print("Evaluted all speaking attempts")
-
