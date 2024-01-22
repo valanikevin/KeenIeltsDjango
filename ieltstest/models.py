@@ -23,6 +23,8 @@ from django.core.cache import cache
 from KeenIeltsDjango.utils import imgix_url
 from base.models import AiResponse
 from django.core.mail import send_mail
+from pydub import AudioSegment
+import shutil, random
 
 STATUS = (
     ('draft', 'Draft'),
@@ -563,9 +565,11 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         'SpeakingModule', help_text='Select Parent module for this attempt', on_delete=models.CASCADE)
     merged_audio = models.FileField(
         help_text="Merged Audio File from all the audios", null=True, blank=True)
+    cropped_audio = models.FileField(
+        help_text="Cropped Audio File that is used for grading", null=True, blank=True)
     audio_text = models.TextField(
         null=True, blank=True, help_text='Text converted from the original audio')
-
+    
     merged_timestamps = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -607,6 +611,35 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
     @property
     def bands_description(self):
         return ielts_speaking_bands_description.get(self.bands)
+    
+    def crop_audio(self):
+        # Load the merged audio file
+        merged_audio = AudioSegment.from_file(self.merged_audio.path)
+
+        # Calculate the duration of the audio file in seconds
+        duration = len(merged_audio) / 1000
+
+        # Check if duration is less than 60 seconds
+        if duration < 60:
+            # If less than 60 seconds, copy the merged_audio to cropped_audio
+            shutil.copy(self.merged_audio.path, self.cropped_audio.path)
+        else:
+            # Select a random start time for the 1-minute clip
+            start_time = random.randint(0, duration - 60) * 1000  # Convert to milliseconds
+
+            # Crop the audio
+            cropped_audio = merged_audio[start_time:start_time + 60000]  # 60 seconds
+
+            # Save the cropped audio
+            cropped_audio_path = f"{self.slug}-cropped.mp3"  # Set the path where you want to save the cropped audio
+            cropped_audio.export(cropped_audio_path, format="mp3")
+
+            # Update the cropped_audio field
+            self.cropped_audio = cropped_audio_path
+
+        # Save the changes
+        self.save()
+
 
     def send_evaluation_email(self):
         message = f"""
