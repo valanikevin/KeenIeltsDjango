@@ -196,6 +196,10 @@ class WritingAttemptAdmin(AttemptAdmin):
     pass
 
 
+class SpeakingAttemptAdmin(AttemptAdmin):
+    pass
+
+
 class FullTestAttemptAdmin(AttemptAdmin):
     list_display = ['user', 'slug', 'status', 'bands']
 
@@ -222,6 +226,6 @@ admin.site.register(WritingAttempt, WritingAttemptAdmin)
 # Speaking
 admin.site.register(SpeakingModule, SpeakingModuleAdmin)
 admin.site.register(SpeakingSection, SpeakingSectionAdmin)
-
+admin.site.register(SpeakingAttempt, SpeakingAttemptAdmin)
 # Full Test
 admin.site.register(FullTestAttempt, FullTestAttemptAdmin)
