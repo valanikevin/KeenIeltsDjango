@@ -854,7 +854,7 @@ def check_answers(attempt):
             is_user_answer_correct = False
             user_answer = user_answer.lower().strip()
             # Check if user's answer matches any of the correct answers
-            if any(user_answer == correct.lower() for correct in correct_answers):
+            if any(str(user_answer) == str(correct).lower() for correct in correct_answers):
                 is_user_answer_correct = True
                 correct_answers_count += 1
                 section_correct += 1
