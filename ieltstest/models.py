@@ -15,6 +15,7 @@ import os
 import pickle
 import json
 import time
+import io
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models import ChatOpenAI
 from django.db.models.signals import post_save
@@ -27,7 +28,7 @@ from pydub import AudioSegment
 import shutil
 import random
 from datetime import datetime
-
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 
 STATUS = (
@@ -630,7 +631,13 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
             # Check if duration is less than the required cropping duration
             if duration < seconds_to_crop:
                 # If less than required duration, copy the merged_audio to cropped_audio
-                shutil.copy(self.merged_audio.path, self.cropped_audio.path)
+                buffer = io.BytesIO()
+                # Get the file format from the file extension
+                format = self.merged_audio.path.split('.')[-1]
+                merged_audio.export(buffer, format=format)
+                self.cropped_audio.save(
+                    f'cropped_{self.merged_audio.name}', ContentFile(buffer.getvalue()))
+                buffer.close()
             else:
                 # Select a random start time for the cropping duration
                 # Convert to milliseconds
@@ -646,7 +653,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
                 # Adjust the directory path as needed
                 current_time = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name = f"{self.slug}-cropped-{current_time}.mp3"
-                cropped_audio_path = f"media/{file_name}"
+                cropped_audio_path = f"{file_name}"
                 cropped_audio.export(cropped_audio_path, format="mp3")
 
                 # Update the cropped_audio field
@@ -1165,3 +1172,10 @@ def change_book_status(sender, instance, created, **kwargs):
 def change_test_status(sender, instance, created, **kwargs):
     if sender in [ListeningModule, ReadingModule, WritingModule, SpeakingModule]:
         instance.test.check_publish_status()
+
+
+@receiver(post_save, sender=SpeakingAttempt)
+def evaluate_speaking_attempts(sender, instance, created, **kwargs):
+    from ieltstest.tasks import evaluate_speaking_attempts
+    if instance.internal_status == "Completed":
+        evaluate_speaking_attempts.delay(instance.slug)

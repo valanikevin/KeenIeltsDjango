@@ -1,8 +1,5 @@
 from django.core.management.base import BaseCommand
 from ieltstest.models import SpeakingAttempt
-import whisper
-from django.core.mail import send_mail
-from django.core.mail import EmailMultiAlternatives
 
 
 class Command(BaseCommand):
