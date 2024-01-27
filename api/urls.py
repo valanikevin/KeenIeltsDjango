@@ -2,8 +2,19 @@ from django.urls import path, include
 from api import views as api_views
 from custom_user import views as user_views
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.contrib.sitemaps.views import sitemap
+from .sitemaps import BookSiteMap, StaticViewSitemap
+
+sitemaps = {
+    'static': StaticViewSitemap,
+    'book': BookSiteMap,
+}
 
 urlpatterns = [
+
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
+         name='django.contrib.sitemaps.views.sitemap'),
+
     path('', api_views.getRoutes),
 
     # App Views
