@@ -653,7 +653,7 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
                 # Adjust the directory path as needed
                 current_time = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name = f"{self.slug}-cropped-{current_time}.mp3"
-                cropped_audio_path = f"{file_name}"
+                cropped_audio_path = f"media/{file_name}"
                 cropped_audio.export(cropped_audio_path, format="mp3")
 
                 # Update the cropped_audio field
