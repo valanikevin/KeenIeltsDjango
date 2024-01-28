@@ -603,8 +603,10 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         if not self.audio_text:
             key_name = "whisper_model"
             if cache.get(key_name):
+                print("Loading model from cache")
                 model = cache.get(key_name)
             else:
+                print("Loading model to memory")
                 model = whisper.load_model("tiny")
                 cache.set(key_name, model, settings.CACHE_TTL)
             print(f"Audio: {self.merged_audio}")
