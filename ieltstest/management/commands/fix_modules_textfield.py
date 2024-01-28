@@ -58,7 +58,7 @@ class Command(BaseCommand):
             # Add classes to the original table
             table_classes = table.get('class', [])
             table_classes.extend(
-                ['table', 'table-striped', 'writingsection-table'])
+                ['table', 'table-striped', 'ieltstest-table'])
             table['class'] = table_classes
 
             # Create a responsive wrapper and wrap the table
