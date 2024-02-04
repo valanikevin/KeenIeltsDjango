@@ -291,7 +291,7 @@ Last 15 Days Performance Data:
     evaluation = chat_model.invoke(messages).content
 
     AiResponse.objects.create(
-        category="speaking",
+        category="dashboard",
         input=prompt,
         response=evaluation,
     )

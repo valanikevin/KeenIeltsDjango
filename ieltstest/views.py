@@ -248,7 +248,6 @@ def get_attempt(request, module_type, attempt_slug):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def get_writing_evaluation(request, attempt_slug, section_id):
     attempt = WritingAttempt.objects.get(slug=attempt_slug)
     section = WritingSection.objects.get(id=section_id)
@@ -257,7 +256,6 @@ def get_writing_evaluation(request, attempt_slug, section_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def get_speaking_evaluation(request, attempt_slug):
     attempt = SpeakingAttempt.objects.get(slug=attempt_slug)
 
