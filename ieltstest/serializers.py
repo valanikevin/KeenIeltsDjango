@@ -191,7 +191,7 @@ class BookBasicSerializer(serializers.ModelSerializer):
 
 
 class AttemptSerializer(serializers.ModelSerializer):
-
+    user_test_info = serializers.SerializerMethodField()
     book = serializers.SerializerMethodField()
     bands_description = serializers.SerializerMethodField()
     full_test_attempt_slug = serializers.SerializerMethodField()
@@ -211,6 +211,17 @@ class AttemptSerializer(serializers.ModelSerializer):
 
     def get_full_test_next_attempt(self, instance):
         return full_test_next_attempt(instance)
+
+    def get_user_test_info(self, instance):
+        user = instance.user
+        return {
+            'id': user.id,
+            'name': user.first_name + " "+user.last_name,
+            'created_at': instance.created_at.strftime('%B %d, %Y'),
+            'test': instance.module.test.name,
+            'book': instance.module.test.book.name,
+
+        }
 
 
 class ListeningAttemptSerializer(AttemptSerializer):

@@ -116,7 +116,6 @@ def find_smart_test_from_module(request, module_type):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def get_module(request, module_type, module_slug):
     IndividualModule, IndividualModuleSerializer = get_individual_test_obj_serializer_from_slug(
         module_type)
@@ -235,7 +234,6 @@ def update_attempt_status(request, attempt):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def get_attempt(request, module_type, attempt_slug):
     IndividualModuleAttempt, IndividualModuleAttemptSerializer = get_module_attempt_from_slug(
         module_type)
