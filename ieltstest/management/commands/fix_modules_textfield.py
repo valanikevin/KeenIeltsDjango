@@ -55,16 +55,16 @@ class Command(BaseCommand):
     def make_tables_responsive(self, soup):
         tables = soup.find_all('table')
         for table in tables:
-            # Add classes to the original table
-            table_classes = table.get('class', [])
-            table_classes.extend(
-                ['table', 'table-striped', 'ieltstest-table'])
-            table['class'] = table_classes
+            # Remove existing classes and set new classes
+            table['class'] = ['table', 'table-striped', 'ieltstest-table']
 
-            # Create a responsive wrapper and wrap the table
-            responsive_wrapper = soup.new_tag('div')
-            responsive_wrapper['class'] = 'table-responsive'
-            table.wrap(responsive_wrapper)
+            # Check if the table is already wrapped by a responsive div
+            parent_div = table.parent
+            if not (parent_div.name == 'div' and 'table-responsive' in parent_div.get('class', [])):
+                # If the table is not already wrapped, create a responsive wrapper and wrap the table
+                responsive_wrapper = soup.new_tag('div')
+                responsive_wrapper['class'] = 'table-responsive'
+                table.wrap(responsive_wrapper)
 
     def print_image_links(self, soup):
         images = soup.find_all('img')
