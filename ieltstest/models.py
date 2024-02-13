@@ -593,9 +593,11 @@ class SpeakingAttempt(IndividualModuleAttemptAbstract):
         if self.internal_status == "Ready" and self.status != "Ready":
             self.status = "Ready"
 
-        if self.is_email_sent == False and self.status == "Ready":
-            self.send_evaluation_email()
-            self.is_email_sent = True
+        # Temporarily do NOT send Email
+
+        # if self.is_email_sent == False and self.status == "Ready":
+        #     self.send_evaluation_email()
+        #     self.is_email_sent = True
 
         super(SpeakingAttempt, self).save(*args, **kwargs)
 
