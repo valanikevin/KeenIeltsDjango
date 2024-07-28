@@ -1,5 +1,6 @@
 staticfiles/
 config.py
+sample-config.py
 */settings.py
 
 # Byte-compiled / optimized / DLL files
