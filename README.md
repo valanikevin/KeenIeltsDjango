@@ -4,14 +4,20 @@ This repository contains the Django backend for the KeenIELTS platform, which pr
 
 ## Table of Contents
 
+- [URL](#url)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
+- [Screenshots](#screenshots)
 - [Contributing](#contributing)
 - [License](#license)
+
+## URL
+
+Visit our platform at [keenielts.com](https://keenielts.com)
 
 ## Features
 
@@ -158,10 +164,19 @@ The primary API endpoints are defined in the `urls.py` file. Here are some key e
 - **custom_user**: Custom user module URLs
 - **base**: Base module URLs
 
+## Screenshots
+
+Include screenshots of the application here to give users a visual overview.
+
+![Screenshot 1](screenshots/screenshot1.png)
+![Screenshot 2](screenshots/screenshot2.png)
+![Screenshot 3](screenshots/screenshot3.png)
+
 ## Contributing
 
 We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
