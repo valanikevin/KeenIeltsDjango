@@ -1,5 +1,6 @@
 staticfiles/
 config.py
+*/settings.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -112,3 +113,4 @@ celerybeat.pid
 .venv
 env/
 venv/
+KeenIeltsDjango/settings.py
