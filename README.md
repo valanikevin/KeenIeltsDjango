@@ -31,8 +31,8 @@ Visit our platform at [keenielts.com](https://keenielts.com)
 - **AI-generated feedback**: Provides daily feedback to help users track their performance.
 
 ## Screenshots
+React Screenshots
 
-Include screenshots of the application here to give users a visual overview.
 ### Home Page
 ![Home Page](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/Home.png)
 
