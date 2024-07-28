@@ -6,12 +6,12 @@ This repository contains the Django backend for the KeenIELTS platform, which pr
 
 - [URL](#url)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Screenshots](#screenshots)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -29,6 +29,31 @@ Visit our platform at [keenielts.com](https://keenielts.com)
 - Sitemap generation for better SEO
 - **AI-powered evaluation**: Uses OpenAI for evaluating speaking and writing tests.
 - **AI-generated feedback**: Provides daily feedback to help users track their performance.
+
+## Screenshots
+
+Include screenshots of the application here to give users a visual overview.
+### Home Page
+![Home Page](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/Home.png)
+
+### Books Page
+![Books](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/Books.png)
+
+### User Dashboard Page
+![User Dashboard](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/Dashboard.png)
+
+### Listening Test Page
+![Listening Test](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/ListeningTest.png)
+
+### Reading Test Page
+![Reading Test](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/ReadingTest.png)
+
+### Writing Test Page
+![Writing Test](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/WritingTest.png)
+
+### Speaking Test Page
+![Speaking Test](https://raw.githubusercontent.com/valanikevin/KeenIeltsReact/main/src/assets/images/screenshots/SpeakingTest.png)
+
 
 ## Tech Stack
 
@@ -163,14 +188,6 @@ The primary API endpoints are defined in the `urls.py` file. Here are some key e
 - **student**: Student module URLs
 - **custom_user**: Custom user module URLs
 - **base**: Base module URLs
-
-## Screenshots
-
-Include screenshots of the application here to give users a visual overview.
-
-![Screenshot 1](screenshots/screenshot1.png)
-![Screenshot 2](screenshots/screenshot2.png)
-![Screenshot 3](screenshots/screenshot3.png)
 
 ## Contributing
 
